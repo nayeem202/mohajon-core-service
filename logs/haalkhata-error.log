@@ -1,0 +1,17 @@
+2026-08-05 00:07:04.251 [http-nio-8081-exec-7] ERROR c.haalkhata.core.config.RequestLogFilter - [7ff7b50b] GET /api/v1/shops/me -> 403 in 9ms
+2026-08-05 00:07:04.395 [http-nio-8081-exec-9] ERROR c.haalkhata.core.config.RequestLogFilter - [17054bb4] GET /api/v1/shops/me -> 403 in 8ms
+2026-08-05 00:11:12.159 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [e69d5191] GET /api/v1/shops/me -> 403 in 10ms
+2026-08-05 00:11:12.276 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [599d0ccf] GET /api/v1/shops/me -> 403 in 9ms
+2026-08-05 00:27:05.055 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [7759048a] GET /api/v1/shops/me -> 403 in 8ms
+2026-08-05 00:27:16.231 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [1f81e215] GET /api/v1/shops/me -> 403 in 4ms
+2026-08-05 00:27:25.823 [http-nio-8081-exec-5] ERROR c.haalkhata.core.config.RequestLogFilter - [1904c38f] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:27:35.412 [http-nio-8081-exec-7] ERROR c.haalkhata.core.config.RequestLogFilter - [7797af6a] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:27:46.577 [http-nio-8081-exec-9] ERROR c.haalkhata.core.config.RequestLogFilter - [3273aa98] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:27:56.159 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [aea7acbc] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:28:05.721 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [40d6dd78] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:28:15.301 [http-nio-8081-exec-5] ERROR c.haalkhata.core.config.RequestLogFilter - [175f370a] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:28:26.482 [http-nio-8081-exec-7] ERROR c.haalkhata.core.config.RequestLogFilter - [bafac7e8] GET /api/v1/shops/me -> 403 in 4ms
+2026-08-05 00:28:36.065 [http-nio-8081-exec-9] ERROR c.haalkhata.core.config.RequestLogFilter - [d33a662d] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:28:45.648 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [f3ea7a8e] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:29:15.621 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [47707ab1] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:45:20.315 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [6fb733a6] GET /api/v1/roles -> 403 in 96ms

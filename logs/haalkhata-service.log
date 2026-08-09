@@ -1,0 +1,252 @@
+2026-08-05 00:00:34.266 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [4e9a9dd0] GET /actuator/health -> 200 in 20ms
+2026-08-05 00:02:47.105 [http-nio-8081-exec-4] INFO  c.haalkhata.core.config.RequestLogFilter - [53186c66] GET /api/v1/users/me/menus -> 200 in 32ms user=owner.test@example.com
+2026-08-05 00:02:47.132 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [b2e01b5c] GET /api/v1/users/me -> 200 in 18ms user=owner.test@example.com
+2026-08-05 00:07:04.247 [http-nio-8081-exec-7] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 3103247 milliseconds ago at 2026-08-04T17:15:21.000Z. Current time: 2026-08-04T18:07:04.247Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:07:04.251 [http-nio-8081-exec-7] ERROR c.haalkhata.core.config.RequestLogFilter - [7ff7b50b] GET /api/v1/shops/me -> 403 in 9ms
+2026-08-05 00:07:04.389 [http-nio-8081-exec-9] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 3103389 milliseconds ago at 2026-08-04T17:15:21.000Z. Current time: 2026-08-04T18:07:04.389Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:07:04.395 [http-nio-8081-exec-9] ERROR c.haalkhata.core.config.RequestLogFilter - [17054bb4] GET /api/v1/shops/me -> 403 in 8ms
+2026-08-05 00:11:12.155 [http-nio-8081-exec-1] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 3351155 milliseconds ago at 2026-08-04T17:15:21.000Z. Current time: 2026-08-04T18:11:12.155Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:11:12.159 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [e69d5191] GET /api/v1/shops/me -> 403 in 10ms
+2026-08-05 00:11:12.273 [http-nio-8081-exec-3] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 3351272 milliseconds ago at 2026-08-04T17:15:21.000Z. Current time: 2026-08-04T18:11:12.272Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:11:12.276 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [599d0ccf] GET /api/v1/shops/me -> 403 in 9ms
+2026-08-05 00:11:56.840 [http-nio-8081-exec-5] INFO  c.h.feature.shop.application.ShopService - SHOP_CREATED shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f owner=f080dbb0-92d7-4077-beb5-eff4b8ed349f
+2026-08-05 00:11:56.861 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [2fed2b14] GET /api/v1/shops/me -> 200 in 48ms user=owner.test@example.com
+2026-08-05 00:11:56.896 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [f17eca4e] GET /api/v1/shops/me -> 200 in 11ms user=owner.test@example.com
+2026-08-05 00:11:56.934 [http-nio-8081-exec-9] DEBUG c.h.feature.sync.application.SyncService - SYNC_PUSH skip self user document
+2026-08-05 00:11:56.935 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PUSH collection=users shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f saved=1
+2026-08-05 00:11:56.940 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [825f76f4] POST /api/v1/sync/push -> 200 in 18ms user=owner.test@example.com
+2026-08-05 00:11:56.942 [http-nio-8081-exec-9] DEBUG c.haalkhata.core.config.RequestLogFilter - [825f76f4] request body: {"collection":"users","documents":[{"userId":"f080dbb0-92d7-4077-beb5-eff4b8ed349f","name":"Test Owner","phone":"01700000001","shopId":"shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f","role":"OWNER","updatedAt":"2026-08-04T18:11:58.141745Z","syncStatus":"synced"}]}
+2026-08-05 00:11:57.064 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=products shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:57.066 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [2b15dff7] GET /api/v1/sync/pull?collection=products -> 200 in 41ms user=owner.test@example.com
+2026-08-05 00:11:57.148 [http-nio-8081-exec-3] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:57.150 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [68c02881] GET /api/v1/sync/pull?collection=customers -> 200 in 18ms user=owner.test@example.com
+2026-08-05 00:11:58.516 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=sales shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:58.519 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [6dbf56f2] GET /api/v1/sync/pull?collection=sales -> 200 in 22ms user=owner.test@example.com
+2026-08-05 00:11:58.579 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customerLedgerEntries shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:58.582 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [4235f80a] GET /api/v1/sync/pull?collection=customerLedgerEntries -> 200 in 18ms user=owner.test@example.com
+2026-08-05 00:11:58.620 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=payments shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:58.622 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [04600eba] GET /api/v1/sync/pull?collection=payments -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:11:58.656 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=purchases shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:58.659 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [bc7dc771] GET /api/v1/sync/pull?collection=purchases -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:11:58.687 [http-nio-8081-exec-3] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=suppliers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:58.690 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [f0070145] GET /api/v1/sync/pull?collection=suppliers -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:11:58.729 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=expenses shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:58.732 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [d76b0b63] GET /api/v1/sync/pull?collection=expenses -> 200 in 16ms user=owner.test@example.com
+2026-08-05 00:11:58.761 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=users shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=1
+2026-08-05 00:11:58.765 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [1e302f01] GET /api/v1/sync/pull?collection=users -> 200 in 8ms user=owner.test@example.com
+2026-08-05 00:11:59.160 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [b43a65e0] GET /api/v1/users/me/menus -> 200 in 16ms user=owner.test@example.com
+2026-08-05 00:11:59.287 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [eaa39b0f] GET /api/v1/shops/me -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:11:59.434 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [cf61c726] GET /api/v1/shops/me -> 200 in 16ms user=owner.test@example.com
+2026-08-05 00:11:59.476 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=products shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.479 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [8a5c3eb2] GET /api/v1/sync/pull?collection=products -> 200 in 23ms user=owner.test@example.com
+2026-08-05 00:11:59.521 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.524 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [3500f19d] GET /api/v1/sync/pull?collection=customers -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:11:59.566 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=sales shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.568 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [2de4ef93] GET /api/v1/sync/pull?collection=sales -> 200 in 12ms user=owner.test@example.com
+2026-08-05 00:11:59.616 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customerLedgerEntries shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.618 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [c24bfdde] GET /api/v1/sync/pull?collection=customerLedgerEntries -> 200 in 12ms user=owner.test@example.com
+2026-08-05 00:11:59.657 [http-nio-8081-exec-3] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=payments shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.660 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [65f7c85d] GET /api/v1/sync/pull?collection=payments -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:11:59.690 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=purchases shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.693 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [7a841dc4] GET /api/v1/sync/pull?collection=purchases -> 200 in 11ms user=owner.test@example.com
+2026-08-05 00:11:59.733 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=suppliers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.736 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [5463bc0f] GET /api/v1/sync/pull?collection=suppliers -> 200 in 12ms user=owner.test@example.com
+2026-08-05 00:11:59.773 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=expenses shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=0
+2026-08-05 00:11:59.776 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [d3a41483] GET /api/v1/sync/pull?collection=expenses -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:11:59.803 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=users shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2000-01-01T00:00 docs=1
+2026-08-05 00:11:59.806 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [4aa478d9] GET /api/v1/sync/pull?collection=users -> 200 in 7ms user=owner.test@example.com
+2026-08-05 00:12:03.512 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [ec3e393d] GET /api/v1/shops/me -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:12:14.483 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [b5018445] GET /api/v1/shops/me -> 200 in 10ms user=owner.test@example.com
+2026-08-05 00:12:24.164 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [4f1cdf17] GET /api/v1/shops/me -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:12:30.160 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [e0dc4b05] GET /api/v1/users -> 200 in 16ms user=owner.test@example.com
+2026-08-05 00:12:32.918 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [0ae82883] GET /api/v1/roles -> 200 in 11ms user=owner.test@example.com
+2026-08-05 00:12:32.921 [http-nio-8081-exec-2] INFO  c.haalkhata.core.config.RequestLogFilter - [601062b2] GET /api/v1/menus -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:13:16.956 [http-nio-8081-exec-5] INFO  c.h.feature.user.application.UserService - AUTH_USER_SYNCED externalId=cda356b1-b05f-465e-b515-b61009db2d8b
+2026-08-05 00:13:16.958 [http-nio-8081-exec-5] INFO  c.h.feature.user.application.UserService - STAFF_UPDATED userId=cda356b1-b05f-465e-b515-b61009db2d8b by=f080dbb0-92d7-4077-beb5-eff4b8ed349f
+2026-08-05 00:13:16.985 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [95d85d56] PATCH /api/v1/users/cda356b1-b05f-465e-b515-b61009db2d8b -> 200 in 71ms user=owner.test@example.com
+2026-08-05 00:13:16.986 [http-nio-8081-exec-5] DEBUG c.haalkhata.core.config.RequestLogFilter - [95d85d56] request body: {"name":"Rahim Cashier","phone":"01722222222","role":"STAFF","menuCodes":["VENDORS","HOME"]}
+2026-08-05 00:13:17.074 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [d8c74e5d] GET /api/v1/users -> 200 in 11ms user=owner.test@example.com
+2026-08-05 00:14:02.928 [http-nio-8081-exec-9] INFO  c.h.feature.user.application.UserService - AUTH_USER_SYNCED externalId=cda356b1-b05f-465e-b515-b61009db2d8b
+2026-08-05 00:14:02.930 [http-nio-8081-exec-9] INFO  c.h.feature.user.application.UserService - STAFF_UPDATED userId=cda356b1-b05f-465e-b515-b61009db2d8b by=f080dbb0-92d7-4077-beb5-eff4b8ed349f
+2026-08-05 00:14:02.950 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [76e38113] PATCH /api/v1/users/cda356b1-b05f-465e-b515-b61009db2d8b -> 200 in 41ms user=owner.test@example.com
+2026-08-05 00:14:02.951 [http-nio-8081-exec-9] DEBUG c.haalkhata.core.config.RequestLogFilter - [76e38113] request body: {"name":"Rahim Cashier","phone":"01722222222","role":"STAFF","menuCodes":["HOME","VENDORS"]}
+2026-08-05 00:14:03.006 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [7451a89a] GET /api/v1/users -> 200 in 12ms user=owner.test@example.com
+2026-08-05 00:25:14.346 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [bedc73fd] GET /api/v1/shops/me -> 200 in 24ms user=owner.test@example.com
+2026-08-05 00:25:14.380 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=products shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:00.931120 docs=0
+2026-08-05 00:25:14.383 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [3ce79cde] GET /api/v1/sync/pull?collection=products&after=2026-08-05T00%3A12%3A00.931120 -> 200 in 21ms user=owner.test@example.com
+2026-08-05 00:25:14.412 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:00.987158 docs=0
+2026-08-05 00:25:14.414 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [81068ce2] GET /api/v1/sync/pull?collection=customers&after=2026-08-05T00%3A12%3A00.987158 -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:25:14.442 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=sales shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:01.030158 docs=0
+2026-08-05 00:25:14.444 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [fe8fbc59] GET /api/v1/sync/pull?collection=sales&after=2026-08-05T00%3A12%3A01.030158 -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:25:14.471 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customerLedgerEntries shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:01.080714 docs=0
+2026-08-05 00:25:14.474 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [4029e6b5] GET /api/v1/sync/pull?collection=customerLedgerEntries&after=2026-08-05T00%3A12%3A01.080714 -> 200 in 15ms user=owner.test@example.com
+2026-08-05 00:25:14.502 [http-nio-8081-exec-3] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=payments shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:01.116820 docs=0
+2026-08-05 00:25:14.504 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [30b9165d] GET /api/v1/sync/pull?collection=payments&after=2026-08-05T00%3A12%3A01.116820 -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:25:14.535 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=purchases shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:01.152735 docs=0
+2026-08-05 00:25:14.537 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [117cf0ce] GET /api/v1/sync/pull?collection=purchases&after=2026-08-05T00%3A12%3A01.152735 -> 200 in 17ms user=owner.test@example.com
+2026-08-05 00:25:14.562 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=suppliers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:01.197012 docs=0
+2026-08-05 00:25:14.565 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [9c9cfab4] GET /api/v1/sync/pull?collection=suppliers&after=2026-08-05T00%3A12%3A01.197012 -> 200 in 15ms user=owner.test@example.com
+2026-08-05 00:25:14.590 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=expenses shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:01.239665 docs=0
+2026-08-05 00:25:14.592 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [887f5b82] GET /api/v1/sync/pull?collection=expenses&after=2026-08-05T00%3A12%3A01.239665 -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:25:14.611 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=users shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:12:01.271632 docs=1
+2026-08-05 00:25:14.614 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [8d2cf2c2] GET /api/v1/sync/pull?collection=users&after=2026-08-05T00%3A12%3A01.271632 -> 200 in 10ms user=owner.test@example.com
+2026-08-05 00:25:19.086 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [3d0f6d49] GET /api/v1/shops/me -> 200 in 11ms user=owner.test@example.com
+2026-08-05 00:25:19.111 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=products shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:15.926685 docs=0
+2026-08-05 00:25:19.113 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [8ffe0f3e] GET /api/v1/sync/pull?collection=products&after=2026-08-05T00%3A25%3A15.926685 -> 200 in 15ms user=owner.test@example.com
+2026-08-05 00:25:19.139 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:15.957627 docs=0
+2026-08-05 00:25:19.141 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [f9f2e46f] GET /api/v1/sync/pull?collection=customers&after=2026-08-05T00%3A25%3A15.957627 -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:25:19.167 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=sales shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:15.990232 docs=0
+2026-08-05 00:25:19.169 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [601c4b5c] GET /api/v1/sync/pull?collection=sales&after=2026-08-05T00%3A25%3A15.990232 -> 200 in 15ms user=owner.test@example.com
+2026-08-05 00:25:19.195 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=customerLedgerEntries shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:16.020167 docs=0
+2026-08-05 00:25:19.198 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [5ee3e8c4] GET /api/v1/sync/pull?collection=customerLedgerEntries&after=2026-08-05T00%3A25%3A16.020167 -> 200 in 16ms user=owner.test@example.com
+2026-08-05 00:25:19.223 [http-nio-8081-exec-3] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=payments shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:16.051410 docs=0
+2026-08-05 00:25:19.225 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [f9e14a40] GET /api/v1/sync/pull?collection=payments&after=2026-08-05T00%3A25%3A16.051410 -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:25:19.247 [http-nio-8081-exec-5] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=purchases shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:16.086432 docs=0
+2026-08-05 00:25:19.249 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [4ffb9ab1] GET /api/v1/sync/pull?collection=purchases&after=2026-08-05T00%3A25%3A16.086432 -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:25:19.270 [http-nio-8081-exec-7] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=suppliers shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:16.116985 docs=0
+2026-08-05 00:25:19.272 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [08fcc33a] GET /api/v1/sync/pull?collection=suppliers&after=2026-08-05T00%3A25%3A16.116985 -> 200 in 12ms user=owner.test@example.com
+2026-08-05 00:25:19.297 [http-nio-8081-exec-9] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=expenses shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:16.143366 docs=0
+2026-08-05 00:25:19.299 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [187e84d4] GET /api/v1/sync/pull?collection=expenses&after=2026-08-05T00%3A25%3A16.143366 -> 200 in 16ms user=owner.test@example.com
+2026-08-05 00:25:19.318 [http-nio-8081-exec-1] INFO  c.h.feature.sync.application.SyncService - SYNC_PULL collection=users shopId=shop_f080dbb0-92d7-4077-beb5-eff4b8ed349f after=2026-08-05T00:25:16.165907 docs=1
+2026-08-05 00:25:19.320 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [ed73f1cb] GET /api/v1/sync/pull?collection=users&after=2026-08-05T00%3A25%3A16.165907 -> 200 in 8ms user=owner.test@example.com
+2026-08-05 00:25:31.937 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [6918f593] GET /api/v1/shops/me -> 200 in 16ms user=owner.test@example.com
+2026-08-05 00:25:41.520 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [c0c55b21] GET /api/v1/shops/me -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:25:54.771 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [7a1e247e] GET /api/v1/shops/me -> 200 in 12ms user=owner.test@example.com
+2026-08-05 00:26:05.923 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [7e1a09ec] GET /api/v1/shops/me -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:26:15.526 [http-nio-8081-exec-1] INFO  c.haalkhata.core.config.RequestLogFilter - [18ebff6b] GET /api/v1/shops/me -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:26:25.118 [http-nio-8081-exec-3] INFO  c.haalkhata.core.config.RequestLogFilter - [35ddca56] GET /api/v1/shops/me -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:26:34.707 [http-nio-8081-exec-5] INFO  c.haalkhata.core.config.RequestLogFilter - [defba919] GET /api/v1/shops/me -> 200 in 12ms user=owner.test@example.com
+2026-08-05 00:26:45.877 [http-nio-8081-exec-7] INFO  c.haalkhata.core.config.RequestLogFilter - [9b776ae7] GET /api/v1/shops/me -> 200 in 13ms user=owner.test@example.com
+2026-08-05 00:26:55.468 [http-nio-8081-exec-9] INFO  c.haalkhata.core.config.RequestLogFilter - [23a46f59] GET /api/v1/shops/me -> 200 in 14ms user=owner.test@example.com
+2026-08-05 00:27:05.051 [http-nio-8081-exec-1] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 9050 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:27:05.050Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:27:05.055 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [7759048a] GET /api/v1/shops/me -> 403 in 8ms
+2026-08-05 00:27:16.229 [http-nio-8081-exec-3] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 20229 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:27:16.229Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:27:16.231 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [1f81e215] GET /api/v1/shops/me -> 403 in 4ms
+2026-08-05 00:27:25.821 [http-nio-8081-exec-5] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 29820 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:27:25.820Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:27:25.823 [http-nio-8081-exec-5] ERROR c.haalkhata.core.config.RequestLogFilter - [1904c38f] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:27:35.409 [http-nio-8081-exec-7] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 39408 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:27:35.408Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:27:35.412 [http-nio-8081-exec-7] ERROR c.haalkhata.core.config.RequestLogFilter - [7797af6a] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:27:46.573 [http-nio-8081-exec-9] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 50573 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:27:46.573Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:27:46.577 [http-nio-8081-exec-9] ERROR c.haalkhata.core.config.RequestLogFilter - [3273aa98] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:27:56.157 [http-nio-8081-exec-1] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 60157 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:27:56.157Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:27:56.159 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [aea7acbc] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:28:05.719 [http-nio-8081-exec-3] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 69719 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:28:05.719Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:28:05.721 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [40d6dd78] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:28:15.298 [http-nio-8081-exec-5] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 79298 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:28:15.298Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:28:15.301 [http-nio-8081-exec-5] ERROR c.haalkhata.core.config.RequestLogFilter - [175f370a] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:28:26.480 [http-nio-8081-exec-7] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 90480 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:28:26.480Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:28:26.482 [http-nio-8081-exec-7] ERROR c.haalkhata.core.config.RequestLogFilter - [bafac7e8] GET /api/v1/shops/me -> 403 in 4ms
+2026-08-05 00:28:36.061 [http-nio-8081-exec-9] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 100061 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:28:36.061Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:28:36.065 [http-nio-8081-exec-9] ERROR c.haalkhata.core.config.RequestLogFilter - [d33a662d] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:28:45.645 [http-nio-8081-exec-1] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 109645 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:28:45.645Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:28:45.648 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [f3ea7a8e] GET /api/v1/shops/me -> 403 in 5ms
+2026-08-05 00:29:15.618 [http-nio-8081-exec-3] DEBUG c.haalkhata.core.security.JwtAuthFilter - Invalid JWT: JWT expired 139618 milliseconds ago at 2026-08-04T18:26:56.000Z. Current time: 2026-08-04T18:29:15.618Z. Allowed clock skew: 0 milliseconds.
+2026-08-05 00:29:15.621 [http-nio-8081-exec-3] ERROR c.haalkhata.core.config.RequestLogFilter - [47707ab1] GET /api/v1/shops/me -> 403 in 6ms
+2026-08-05 00:43:16.159 [SpringApplicationShutdownHook] INFO  o.s.b.w.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-08-05 00:43:16.173 [tomcat-shutdown] INFO  o.s.b.w.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-08-05 00:43:16.223 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-05 00:43:16.238 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-08-05 00:43:16.251 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-08-05 00:43:21.020 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-08-05 00:43:21.219 [main] INFO  com.haalkhata.HaalkhataApplication - Starting HaalkhataApplication v1.0.0 using Java 25.0.4 with PID 14049 (/mnt/c/Users/PC/IdeaProjects/haalkhata-service/build/libs/haalkhata-service-1.0.0.jar started by pc in /mnt/c/Users/PC/IdeaProjects/haalkhata-service)
+2026-08-05 00:43:21.220 [main] DEBUG com.haalkhata.HaalkhataApplication - Running with Spring Boot v3.5.16, Spring v6.2.19
+2026-08-05 00:43:21.222 [main] INFO  com.haalkhata.HaalkhataApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-05 00:43:24.124 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-05 00:43:24.394 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 241 ms. Found 32 JPA repository interfaces.
+2026-08-05 00:43:25.790 [main] INFO  o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8081 (http)
+2026-08-05 00:43:25.814 [main] INFO  o.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8081"]
+2026-08-05 00:43:25.819 [main] INFO  o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-05 00:43:25.820 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-08-05 00:43:25.891 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-05 00:43:25.892 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 4525 ms
+2026-08-05 00:43:26.386 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-08-05 00:43:26.896 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@3578a45b
+2026-08-05 00:43:26.902 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-08-05 00:43:26.956 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://localhost:5432/authdb?currentSchema=hk (PostgreSQL 16.14)
+2026-08-05 00:43:27.045 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 3 migrations (execution time 00:00.051s)
+2026-08-05 00:43:27.078 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "hk": 2
+2026-08-05 00:43:27.084 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "hk" is up to date. No migration necessary.
+2026-08-05 00:43:27.315 [main] INFO  o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-05 00:43:27.540 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-08-05 00:43:27.636 [main] INFO  o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-05 00:43:28.306 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-05 00:43:28.474 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.14
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-08-05 00:43:30.780 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-05 00:43:30.789 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-05 00:43:31.815 [main] DEBUG c.haalkhata.core.config.RequestLogFilter - Filter 'requestLogFilterRegistration' configured for use
+2026-08-05 00:43:31.816 [main] DEBUG c.haalkhata.core.security.JwtAuthFilter - Filter 'jwtAuthFilter' configured for use
+2026-08-05 00:43:32.040 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-05 00:43:34.368 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoints beneath base path '/actuator'
+2026-08-05 00:43:34.430 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 20696289-1b0c-436e-a8f4-35e53a30a364
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-05 00:43:34.450 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-08-05 00:43:35.351 [main] INFO  o.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8081"]
+2026-08-05 00:43:35.380 [main] INFO  o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 8081 (http) with context path '/'
+2026-08-05 00:43:35.404 [main] INFO  com.haalkhata.HaalkhataApplication - Started HaalkhataApplication in 16.025 seconds (process running for 17.242)
+2026-08-05 00:44:20.164 [SpringApplicationShutdownHook] INFO  o.s.b.w.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-08-05 00:44:20.170 [tomcat-shutdown] INFO  o.s.b.w.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-08-05 00:44:20.183 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-05 00:44:20.190 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-08-05 00:44:20.206 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-08-05 00:44:57.820 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-08-05 00:44:58.040 [main] INFO  com.haalkhata.HaalkhataApplication - Starting HaalkhataApplication v1.0.0 using Java 25.0.4 with PID 14191 (/mnt/c/Users/PC/IdeaProjects/haalkhata-service/build/libs/haalkhata-service-1.0.0.jar started by pc in /mnt/c/Users/PC/IdeaProjects/haalkhata-service)
+2026-08-05 00:44:58.042 [main] DEBUG com.haalkhata.HaalkhataApplication - Running with Spring Boot v3.5.16, Spring v6.2.19
+2026-08-05 00:44:58.044 [main] INFO  com.haalkhata.HaalkhataApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-05 00:45:01.179 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-05 00:45:01.436 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 233 ms. Found 32 JPA repository interfaces.
+2026-08-05 00:45:02.784 [main] INFO  o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8081 (http)
+2026-08-05 00:45:02.813 [main] INFO  o.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8081"]
+2026-08-05 00:45:02.820 [main] INFO  o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-05 00:45:02.822 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-08-05 00:45:02.898 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-05 00:45:02.900 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 4700 ms
+2026-08-05 00:45:03.456 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-08-05 00:45:03.952 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@4e5364a3
+2026-08-05 00:45:03.956 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-08-05 00:45:04.019 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://localhost:5432/authdb?currentSchema=hk (PostgreSQL 16.14)
+2026-08-05 00:45:04.132 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 3 migrations (execution time 00:00.076s)
+2026-08-05 00:45:04.157 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "hk": 2
+2026-08-05 00:45:04.163 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "hk" is up to date. No migration necessary.
+2026-08-05 00:45:04.383 [main] INFO  o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-05 00:45:04.542 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-08-05 00:45:04.631 [main] INFO  o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-05 00:45:05.336 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-05 00:45:05.510 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.14
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-08-05 00:45:07.847 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-05 00:45:07.854 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-05 00:45:08.912 [main] DEBUG c.haalkhata.core.config.RequestLogFilter - Filter 'requestLogFilterRegistration' configured for use
+2026-08-05 00:45:08.914 [main] DEBUG c.haalkhata.core.security.JwtAuthFilter - Filter 'jwtAuthFilter' configured for use
+2026-08-05 00:45:09.195 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-05 00:45:11.820 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoints beneath base path '/actuator'
+2026-08-05 00:45:11.896 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 46e9266a-db43-44ec-a9b5-5cd7f509c26d
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-05 00:45:11.946 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-08-05 00:45:13.112 [main] INFO  o.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8081"]
+2026-08-05 00:45:13.137 [main] INFO  o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 8081 (http) with context path '/'
+2026-08-05 00:45:13.176 [main] INFO  com.haalkhata.HaalkhataApplication - Started HaalkhataApplication in 16.849 seconds (process running for 18.096)
+2026-08-05 00:45:20.209 [http-nio-8081-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-05 00:45:20.210 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-08-05 00:45:20.212 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-08-05 00:45:20.315 [http-nio-8081-exec-1] ERROR c.haalkhata.core.config.RequestLogFilter - [6fb733a6] GET /api/v1/roles -> 403 in 96ms

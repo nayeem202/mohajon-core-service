@@ -1,0 +1,56 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: haalkhata-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:authdb}?currentSchema=${DB_SCHEMA:hk}
+    username: ${DB_USER:auth}
+    password: ${DB_PASSWORD:auth}
+    hikari:
+      maximum-pool-size: 10
+  flyway:
+    schemas: ${DB_SCHEMA:hk}
+    create-schemas: true
+    baseline-on-migrate: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: ${DB_SCHEMA:hk}
+        jdbc:
+          time_zone: UTC
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+app:
+  jwt-secret: ${JWT_SECRET:haalkhata-dev-secret-change-me-in-production-0123456789abcdef}
+  trusted-jwt-secret: ${TRUSTED_JWT_SECRET:dev-only-secret-change-me-in-production-0123456789}
+  access-token-minutes: ${ACCESS_TOKEN_MINUTES:10080}
+  refresh-token-days: ${REFRESH_TOKEN_DAYS:30}
+  verification-code-ttl-minutes: ${VERIFICATION_CODE_TTL_MINUTES:10}
+  otp-ttl-minutes: ${OTP_TTL_MINUTES:5}
+  storage-dir: ${HAALKHATA_STORAGE_DIR:./storage}
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+  mail-provider: ${MAIL_PROVIDER:console}
+  google-client-id: ${GOOGLE_CLIENT_ID:}
+  log-request-body: ${LOG_REQUEST_BODY:true}
+
+logging:
+  level:
+    root: INFO
+    com.haalkhata: DEBUG
+    org.hibernate.SQL: WARN
