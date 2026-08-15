@@ -26,6 +26,12 @@ import com.haalkhata.feature.sale.domain.Sale;
 import com.haalkhata.feature.sale.domain.SaleItem;
 import com.haalkhata.feature.sale.infrastructure.SaleItemRepository;
 import com.haalkhata.feature.sale.infrastructure.SaleRepository;
+import com.haalkhata.feature.vendor.domain.Vendor;
+import com.haalkhata.feature.vendor.domain.VendorPayment;
+import com.haalkhata.feature.vendor.domain.VendorPurchase;
+import com.haalkhata.feature.vendor.infrastructure.VendorPaymentRepository;
+import com.haalkhata.feature.vendor.infrastructure.VendorPurchaseRepository;
+import com.haalkhata.feature.vendor.infrastructure.VendorRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -46,7 +52,8 @@ public class SyncService {
 
     private static final List<String> COLLECTIONS = List.of(
             "products", "customers", "sales", "customerLedgerEntries",
-            "payments", "purchases", "suppliers", "expenses", "users");
+            "payments", "purchases", "suppliers", "vendors", "vendorPurchases",
+            "vendorPayments", "expenses", "users");
 
     private final ObjectMapper mapper;
     private final ProductRepository productRepository;
@@ -59,6 +66,9 @@ public class SyncService {
     private final PurchaseItemRepository purchaseItemRepository;
     private final SupplierRepository supplierRepository;
     private final ExpenseRepository expenseRepository;
+    private final VendorRepository vendorRepository;
+    private final VendorPurchaseRepository vendorPurchaseRepository;
+    private final VendorPaymentRepository vendorPaymentRepository;
 
     public List<String> collections() {
         return COLLECTIONS;
@@ -84,6 +94,9 @@ public class SyncService {
                 case "payments" -> upsertPayment(user.getShopId(), doc);
                 case "purchases" -> upsertPurchase(user.getShopId(), doc);
                 case "suppliers" -> upsertSupplier(user.getShopId(), doc);
+                case "vendors" -> upsertVendor(user.getShopId(), doc);
+                case "vendorPurchases" -> upsertVendorPurchase(user.getShopId(), doc);
+                case "vendorPayments" -> upsertVendorPayment(user.getShopId(), doc);
                 case "expenses" -> upsertExpense(user.getShopId(), doc);
                 case "users" -> upsertShopUser(user, doc);
             }
@@ -152,6 +165,30 @@ public class SyncService {
                         .forEach(s -> d.add(supplierJson(s)));
                 supplierRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(s -> d.add(supplierJson(s)));
+                yield d;
+            }
+            case "vendors" -> {
+                List<Map<String, Object>> d = new ArrayList<>();
+                vendorRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                        .forEach(v -> d.add(vendorJson(v)));
+                vendorRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
+                        .forEach(v -> d.add(vendorJson(v)));
+                yield d;
+            }
+            case "vendorPurchases" -> {
+                List<Map<String, Object>> d = new ArrayList<>();
+                vendorPurchaseRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                        .forEach(p -> d.add(vendorPurchaseJson(p)));
+                vendorPurchaseRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
+                        .forEach(p -> d.add(vendorPurchaseJson(p)));
+                yield d;
+            }
+            case "vendorPayments" -> {
+                List<Map<String, Object>> d = new ArrayList<>();
+                vendorPaymentRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                        .forEach(p -> d.add(vendorPaymentJson(p)));
+                vendorPaymentRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
+                        .forEach(p -> d.add(vendorPaymentJson(p)));
                 yield d;
             }
             case "expenses" -> {
@@ -368,6 +405,72 @@ public class SyncService {
         expenseRepository.save(expense);
     }
 
+    private void upsertVendor(String shopId, Map<String, Object> doc) {
+        String id = str(doc, "vendorId");
+        Vendor vendor = vendorRepository.findById(id).orElseGet(() -> Vendor.builder()
+                .vendorId(id).shopId(shopId).createdAt(time(doc, "createdAt"))
+                .updatedAt(LocalDateTime.now()).build());
+        ensureShop(shopId, vendor.getShopId());
+        vendor.setShopId(shopId);
+        vendor.setCompanyName(str(doc, "companyName"));
+        vendor.setContactPerson(nul(doc, "contactPerson"));
+        vendor.setPhone(nul(doc, "phone"));
+        vendor.setEmail(nul(doc, "email"));
+        vendor.setCategory(nul(doc, "category"));
+        vendor.setAddress(nul(doc, "address"));
+        vendor.setProducts(nul(doc, "products"));
+        vendor.setRating(dbl(doc, "rating"));
+        vendor.setTotalOrders((int) dbl(doc, "totalOrders"));
+        vendor.setTotalSpent(dbl(doc, "totalSpent"));
+        vendor.setPendingAmount(dbl(doc, "pendingAmount"));
+        vendor.setLastPurchaseDate(nullableTime(doc, "lastPurchaseDate"));
+        vendor.setStatus(str(doc, "status"));
+        vendor.setDeleted(bool(doc, "isDeleted"));
+        vendor.setCreatedAt(time(doc, "createdAt"));
+        vendor.setUpdatedAt(time(doc, "updatedAt"));
+        vendorRepository.save(vendor);
+    }
+
+    private void upsertVendorPurchase(String shopId, Map<String, Object> doc) {
+        String id = str(doc, "purchaseId");
+        VendorPurchase purchase = vendorPurchaseRepository.findById(id).orElseGet(() ->
+                VendorPurchase.builder().purchaseId(id).shopId(shopId).updatedAt(LocalDateTime.now()).build());
+        ensureShop(shopId, purchase.getShopId());
+        purchase.setShopId(shopId);
+        purchase.setVendorId(str(doc, "vendorId"));
+        purchase.setAmount(dbl(doc, "amount"));
+        purchase.setDate(time(doc, "date"));
+        purchase.setStatus(str(doc, "status"));
+        purchase.setNotes(nul(doc, "notes"));
+        purchase.setItemsSupplied(nul(doc, "itemsSupplied"));
+        purchase.setDeleted(bool(doc, "isDeleted"));
+        purchase.setUpdatedAt(time(doc, "updatedAt"));
+        vendorPurchaseRepository.save(purchase);
+    }
+
+    private void upsertVendorPayment(String shopId, Map<String, Object> doc) {
+        String id = str(doc, "paymentId");
+        VendorPayment payment = vendorPaymentRepository.findById(id).orElseGet(() ->
+                VendorPayment.builder().paymentId(id).shopId(shopId).updatedAt(LocalDateTime.now()).build());
+        ensureShop(shopId, payment.getShopId());
+        payment.setShopId(shopId);
+        payment.setVendorId(str(doc, "vendorId"));
+        payment.setAmount(dbl(doc, "amount"));
+        payment.setDate(time(doc, "date"));
+        payment.setMethod(nul(doc, "method"));
+        payment.setReference(nul(doc, "reference"));
+        payment.setNotes(nul(doc, "notes"));
+        payment.setDeleted(bool(doc, "isDeleted"));
+        payment.setUpdatedAt(time(doc, "updatedAt"));
+        vendorPaymentRepository.save(payment);
+    }
+
+    private void ensureShop(String expectedShopId, String actualShopId) {
+        if (actualShopId != null && !expectedShopId.equals(actualShopId)) {
+            throw BusinessException.forbidden("Document belongs to another shop");
+        }
+    }
+
     private void upsertShopUser(CurrentUser user, Map<String, Object> doc) {
         // users collection: only staff of this shop; owner is derived from the token
         String userId = str(doc, "userId");
@@ -507,6 +610,59 @@ public class SyncService {
         return json;
     }
 
+    private Map<String, Object> vendorJson(Vendor v) {
+        Map<String, Object> json = new HashMap<>();
+        json.put("vendorId", v.getVendorId());
+        json.put("companyName", v.getCompanyName());
+        json.put("contactPerson", v.getContactPerson());
+        json.put("phone", v.getPhone());
+        json.put("email", v.getEmail());
+        json.put("category", v.getCategory());
+        json.put("address", v.getAddress());
+        json.put("products", v.getProducts());
+        json.put("rating", v.getRating());
+        json.put("totalOrders", v.getTotalOrders());
+        json.put("totalSpent", v.getTotalSpent());
+        json.put("pendingAmount", v.getPendingAmount());
+        json.put("lastPurchaseDate", v.getLastPurchaseDate() == null ? null : v.getLastPurchaseDate().format(ISO));
+        json.put("status", v.getStatus());
+        json.put("shopId", v.getShopId());
+        json.put("createdAt", v.getCreatedAt().format(ISO));
+        json.put("updatedAt", v.getUpdatedAt().format(ISO));
+        json.put("isDeleted", v.isDeleted());
+        return json;
+    }
+
+    private Map<String, Object> vendorPurchaseJson(VendorPurchase p) {
+        Map<String, Object> json = new HashMap<>();
+        json.put("purchaseId", p.getPurchaseId());
+        json.put("vendorId", p.getVendorId());
+        json.put("amount", p.getAmount());
+        json.put("date", p.getDate().format(ISO));
+        json.put("status", p.getStatus());
+        json.put("notes", p.getNotes());
+        json.put("itemsSupplied", p.getItemsSupplied());
+        json.put("shopId", p.getShopId());
+        json.put("updatedAt", p.getUpdatedAt().format(ISO));
+        json.put("isDeleted", p.isDeleted());
+        return json;
+    }
+
+    private Map<String, Object> vendorPaymentJson(VendorPayment p) {
+        Map<String, Object> json = new HashMap<>();
+        json.put("paymentId", p.getPaymentId());
+        json.put("vendorId", p.getVendorId());
+        json.put("amount", p.getAmount());
+        json.put("date", p.getDate().format(ISO));
+        json.put("method", p.getMethod());
+        json.put("reference", p.getReference());
+        json.put("notes", p.getNotes());
+        json.put("shopId", p.getShopId());
+        json.put("updatedAt", p.getUpdatedAt().format(ISO));
+        json.put("isDeleted", p.isDeleted());
+        return json;
+    }
+
     private Map<String, Object> expenseJson(Expense e) {
         Map<String, Object> json = new HashMap<>();
         json.put("expenseId", e.getExpenseId());
@@ -545,6 +701,9 @@ public class SyncService {
             case "payments" -> "paymentId";
             case "purchases" -> "purchaseId";
             case "suppliers" -> "supplierId";
+            case "vendors" -> "vendorId";
+            case "vendorPurchases" -> "purchaseId";
+            case "vendorPayments" -> "paymentId";
             case "expenses" -> "expenseId";
             case "users" -> "userId";
             default -> "id";
@@ -583,5 +742,10 @@ public class SyncService {
             return LocalDateTime.now();
         }
         return TimeUtil.parse(String.valueOf(v), LocalDateTime.now());
+    }
+
+    private LocalDateTime nullableTime(Map<String, Object> doc, String key) {
+        Object v = doc.get(key);
+        return v == null || String.valueOf(v).isBlank() ? null : TimeUtil.parse(String.valueOf(v), null);
     }
 }

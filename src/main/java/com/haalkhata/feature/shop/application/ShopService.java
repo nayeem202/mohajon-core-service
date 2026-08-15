@@ -21,6 +21,7 @@ import com.haalkhata.feature.sale.infrastructure.SaleRepository;
 import com.haalkhata.feature.shop.domain.Shop;
 import com.haalkhata.feature.shop.domain.ShopOwner;
 import com.haalkhata.feature.shop.infrastructure.ShopOwnerRepository;
+import com.haalkhata.feature.auth.infrastructure.AppUserRepository;
 import com.haalkhata.feature.shop.infrastructure.ShopRepository;
 import com.haalkhata.feature.vendor.infrastructure.VendorPaymentRepository;
 import com.haalkhata.feature.vendor.infrastructure.VendorPurchaseRepository;
@@ -41,6 +42,7 @@ public class ShopService {
 
     private final ShopRepository shopRepository;
     private final ShopOwnerRepository shopOwnerRepository;
+    private final AppUserRepository appUserRepository;
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final CustomerLedgerEntryRepository ledgerRepository;
@@ -96,6 +98,12 @@ public class ShopService {
 
     @Transactional
     public Map<String, Object> update(CurrentUser user, UpdateShopRequest request) {
+        if (user.getRole() == null || !(user.getRole().equalsIgnoreCase("OWNER")
+                || user.getRole().equalsIgnoreCase("ADMIN"))) {
+            throw new com.haalkhata.core.exception.BusinessException(
+                    "FORBIDDEN", "Only the shop owner or admin can update store information",
+                    org.springframework.http.HttpStatus.FORBIDDEN);
+        }
         Shop shop = shopRepository.findById(user.getShopId())
                 .orElseThrow(() -> new com.haalkhata.core.exception.BusinessException(
                         "SHOP_NOT_FOUND", "Shop not found", org.springframework.http.HttpStatus.NOT_FOUND));
@@ -172,6 +180,8 @@ public class ShopService {
         Map<String, Object> json = new java.util.HashMap<>();
         json.put("shopId", shop.getShopId());
         json.put("ownerUserId", shop.getOwnerUserId());
+        json.put("ownerEmail", appUserRepository.findById(shop.getOwnerUserId())
+                .map(value -> value.getEmail() == null ? "" : value.getEmail()).orElse(""));
         json.put("name", shop.getName());
         json.put("location", shop.getLocation() == null ? "" : shop.getLocation());
         json.put("phoneNumber", shop.getPhoneNumber() == null ? "" : shop.getPhoneNumber());

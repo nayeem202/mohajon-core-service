@@ -79,7 +79,12 @@ public class UserService {
     }
 
     public List<String> myMenuCodes(CurrentUser currentUser) {
-        String role = currentUser.getRole() == null ? "" : currentUser.getRole().toUpperCase();
+        // Resolve the role from the business database, not only from the JWT.
+        // A stale token must never turn a staff member into an owner.
+        String role = userRepository.findById(currentUser.getUserId())
+                .map(AppUser::getRole)
+                .orElse(currentUser.getRole());
+        role = role == null ? "" : role.toUpperCase();
         if ("OWNER".equals(role) || "ADMIN".equals(role)) {
             return menuRepository.findAll().stream().map(Menu::getCode).toList();
         }

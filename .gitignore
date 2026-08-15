@@ -1,0 +1,6 @@
+firebase-adminsdk*.json
+secrets/
+.gradle/
+build/
+logs/
+storage/
