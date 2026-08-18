@@ -49,6 +49,8 @@ app:
   google-client-id: ${GOOGLE_CLIENT_ID:}
   firebase-service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
   firebase-service-account-file: ${FIREBASE_SERVICE_ACCOUNT_FILE:}
+  gemini-api-key: ${GEMINI_API_KEY:}
+  gemini-model: ${GEMINI_MODEL:gemini-2.5-flash}
   log-request-body: ${LOG_REQUEST_BODY:true}
 
 logging:

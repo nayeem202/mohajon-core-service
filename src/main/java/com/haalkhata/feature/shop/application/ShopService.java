@@ -63,7 +63,7 @@ public class ShopService {
     private final InvestmentCategoryRepository categoryRepository;
     private final PayoutRepository payoutRepository;
 
-    public record UpdateShopRequest(String name, String location, String phoneNumber,
+    public record UpdateShopRequest(String name, String location, String phoneNumber, String imagePath,
                                     List<OwnerDto> owners) {
     }
 
@@ -115,6 +115,9 @@ public class ShopService {
         }
         if (request.phoneNumber() != null) {
             shop.setPhoneNumber(request.phoneNumber().trim());
+        }
+        if (request.imagePath() != null) {
+            shop.setImagePath(request.imagePath().isBlank() ? null : request.imagePath().trim());
         }
         if (request.owners() != null) {
             double total = 0;
@@ -185,6 +188,7 @@ public class ShopService {
         json.put("name", shop.getName());
         json.put("location", shop.getLocation() == null ? "" : shop.getLocation());
         json.put("phoneNumber", shop.getPhoneNumber() == null ? "" : shop.getPhoneNumber());
+        json.put("imagePath", shop.getImagePath() == null ? "" : shop.getImagePath());
         json.put("owners", owners);
         json.put("ownerCount", shop.getOwnerCount());
         json.put("totalInvestment", shop.getTotalInvestment());

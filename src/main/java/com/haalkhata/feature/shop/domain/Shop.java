@@ -36,6 +36,9 @@ public class Shop {
     @Column(name = "phone_number", length = 30)
     private String phoneNumber;
 
+    @Column(name = "image_path", length = 500)
+    private String imagePath;
+
     @Column(name = "owner_count", nullable = false)
     private int ownerCount;
 
