@@ -39,6 +39,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**", "/actuator/health", "/error").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/files/**").permitAll()
                         .anyRequest().authenticated())
+                // Missing/expired token must be 401 (not 403) so the app's
+                // token-refresh flow can kick in; 403 stays reserved for
+                // authenticated-but-forbidden cases.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        (request, response, authException) -> response.sendError(
+                                jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED)))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

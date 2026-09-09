@@ -54,6 +54,9 @@ public class AppUser {
     @Column(nullable = false, length = 30)
     private String role;
 
+    @Column(name = "status", nullable = false, length = 20)
+    private String status;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

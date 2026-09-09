@@ -11,6 +11,8 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
 
     List<Payment> findByShopIdAndCustomerIdAndIsDeletedFalseOrderByCreatedAtDesc(String shopId, String customerId);
 
+    List<Payment> findBySaleIdAndShopIdAndIsDeletedFalse(String saleId, String shopId);
+
     List<Payment> findByShopIdAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 
     List<Payment> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);

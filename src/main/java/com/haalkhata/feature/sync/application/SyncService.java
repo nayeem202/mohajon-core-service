@@ -35,6 +35,7 @@ import com.haalkhata.feature.vendor.infrastructure.VendorRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +107,7 @@ public class SyncService {
         return saved;
     }
 
-    public List<Map<String, Object>> pull(CurrentUser user, String collection, LocalDateTime after) {
+    public List<Map<String, Object>> pull(CurrentUser user, String collection, LocalDateTime after, Integer limit) {
         if (!COLLECTIONS.contains(collection)) {
             throw BusinessException.badRequest("Unknown collection: " + collection);
         }
@@ -202,9 +203,19 @@ public class SyncService {
             case "users" -> List.of(shopUserJson(user));
             default -> List.of();
         };
+        // Deterministic ordering so `after`-based paging never skips or
+        // duplicates rows between pages, and bound the in-memory payload to
+        // the page size the client actually consumes.
+        List<Map<String, Object>> paged = new ArrayList<>(docs);
+        paged.sort(Comparator.comparing(
+                d -> TimeUtil.parse(String.valueOf(d.get("updatedAt")), LocalDateTime.MIN)));
+        int cap = limit != null && limit > 0 ? limit + 1 : Integer.MAX_VALUE;
+        if (paged.size() > cap) {
+            paged = new ArrayList<>(paged.subList(0, cap));
+        }
         log.info("SYNC_PULL collection={} shopId={} after={} docs={}",
-                collection, user.getShopId(), after, docs.size());
-        return docs;
+                collection, user.getShopId(), after, paged.size());
+        return paged;
     }
 
     // -------- upserts --------
@@ -226,7 +237,12 @@ public class SyncService {
         product.setBuyingPrice(dbl(doc, "buyingPrice"));
         product.setPurchasePrice(dbl(doc, "purchasePrice"));
         product.setSellingPrice(dbl(doc, "sellingPrice"));
-        product.setStockQty(doc.get("stockQty") == null ? 0 : ((Number) doc.get("stockQty")).intValue());
+        int stock = doc.get("stockQty") == null ? 0 : ((Number) doc.get("stockQty")).intValue();
+        if (stock < 0) {
+            log.warn("SYNC_PRODUCT_STOCK_CLAMPED productId={} shopId={} stockQty={} -> 0", id, shopId, stock);
+            stock = 0;
+        }
+        product.setStockQty(stock);
         product.setLowStockAlert(doc.get("lowStockAlert") == null ? 0 : ((Number) doc.get("lowStockAlert")).intValue());
         product.setDeleted(bool(doc, "isDeleted"));
         product.setUpdatedAt(time(doc, "updatedAt"));

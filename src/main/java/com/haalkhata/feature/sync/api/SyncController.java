@@ -32,10 +32,19 @@ public class SyncController {
     @GetMapping("/pull")
     public Map<String, Object> pull(@AuthenticationPrincipal CurrentUser user,
                                     @RequestParam String collection,
-                                    @RequestParam(required = false) String after) {
+                                    @RequestParam(required = false) String after,
+                                    @RequestParam(required = false) Integer limit) {
         LocalDateTime afterTime = TimeUtil.parse(after, LocalDateTime.of(2000, 1, 1, 0, 0));
-        List<Map<String, Object>> documents = syncService.pull(user, collection, afterTime);
-        return Map.of("collection", collection, "documents", documents);
+        List<Map<String, Object>> all = syncService.pull(user, collection, afterTime, limit);
+        // Legacy clients omit `limit` and get the full result set. Paging
+        // clients pass `limit` and follow `hasMore` until it is false.
+        boolean hasMore = false;
+        List<Map<String, Object>> documents = all;
+        if (limit != null && limit > 0 && all.size() > limit) {
+            documents = all.subList(0, limit);
+            hasMore = true;
+        }
+        return Map.of("collection", collection, "documents", documents, "hasMore", hasMore);
     }
 
     public record PushRequest(String collection, List<Map<String, Object>> documents) {

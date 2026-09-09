@@ -42,8 +42,14 @@ public class DashboardService {
         json.put("weekSales", saleRepository.sumTotal(shopId, weekStart, dayEnd));
         json.put("totalDue", totalDue(user));
         json.put("customerCount", customerRepository.findByShopIdAndIsDeletedFalseOrderByNameAsc(shopId).size());
-        json.put("lowStockCount", productRepository
-                .findByShopIdAndIsDeletedFalseAndStockQtyLessThanEqual(shopId, 10).size());
+        Long lowStockCount = productRepository
+                .findByShopIdAndIsDeletedFalseOrderByNameEnAsc(shopId).stream()
+                .filter(p -> {
+                    int threshold = p.getLowStockAlert() > 0 ? p.getLowStockAlert() : 10;
+                    return p.getStockQty() <= threshold;
+                })
+                .count();
+        json.put("lowStockCount", lowStockCount);
         json.put("productCount", productRepository.findByShopIdAndIsDeletedFalseOrderByNameEnAsc(shopId).size());
         json.put("weeklySales", weeklySales(user));
         json.put("topProducts", topProducts(user));

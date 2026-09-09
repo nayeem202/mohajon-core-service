@@ -3,7 +3,7 @@ package com.haalkhata.feature.purchase.application;
 import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
-import com.haalkhata.feature.product.domain.Product;
+import com.haalkhata.core.util.MoneyUtil;
 import com.haalkhata.feature.product.infrastructure.ProductRepository;
 import com.haalkhata.feature.purchase.domain.Purchase;
 import com.haalkhata.feature.purchase.domain.PurchaseItem;
@@ -109,7 +109,7 @@ public class PurchaseService {
                 .findBySupplierIdAndShopIdAndIsDeletedFalse(request.supplierId(), user.getShopId())
                 .orElseThrow(() -> BusinessException.notFound("Supplier not found"));
 
-        double total = request.totalAmount() == null ? 0 : request.totalAmount();
+        double total = MoneyUtil.round2(request.totalAmount() == null ? 0 : request.totalAmount());
         LocalDateTime now = LocalDateTime.now();
         Purchase purchase = Purchase.builder()
                 .purchaseId(request.purchaseId() == null || request.purchaseId().isBlank()
@@ -117,7 +117,7 @@ public class PurchaseService {
                 .shopId(user.getShopId())
                 .supplierId(supplier.getSupplierId())
                 .totalAmount(total)
-                .paidAmount(request.paidAmount() == null ? 0 : request.paidAmount())
+                .paidAmount(MoneyUtil.round2(request.paidAmount() == null ? 0 : request.paidAmount()))
                 .createdAt(now)
                 .updatedAt(now)
                 .isDeleted(false)
@@ -125,6 +125,13 @@ public class PurchaseService {
         purchaseRepository.save(purchase);
 
         for (PurchaseItemRequest item : request.items()) {
+            if (item.qty() <= 0) {
+                throw BusinessException.badRequest("Quantity must be greater than zero for " + item.name());
+            }
+            if (item.qty() != Math.floor(item.qty())) {
+                throw BusinessException.badRequest(
+                        "Fractional quantity is not supported for " + item.name());
+            }
             purchaseItemRepository.save(PurchaseItem.builder()
                     .id(Ids.uuid())
                     .purchaseId(purchase.getPurchaseId())
@@ -133,13 +140,9 @@ public class PurchaseService {
                     .qty(item.qty())
                     .unitCost(item.unitCost())
                     .build());
-            if (item.productId() != null) {
-                productRepository.findByProductIdAndShopIdAndIsDeletedFalse(item.productId(), user.getShopId())
-                        .ifPresent(product -> {
-                            product.setStockQty(product.getStockQty() + (int) item.qty());
-                            product.setUpdatedAt(now);
-                            productRepository.save(product);
-                        });
+            if (item.productId() != null && !item.productId().isBlank()) {
+                productRepository.incrementStock(item.productId(), user.getShopId(),
+                        (int) item.qty(), now);
             }
         }
         log.info("PURCHASE_CREATED purchaseId={} supplier={} total={}",

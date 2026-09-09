@@ -41,7 +41,7 @@ public class UserService {
     }
 
     public record UpdateRequest(String name, String phone, String role, List<String> menuCodes,
-                                String photoUrl) {
+                                String photoUrl, Boolean active) {
     }
 
     public List<Map<String, Object>> listStaff(CurrentUser owner) {
@@ -109,8 +109,21 @@ public class UserService {
 
     @Transactional
     public Map<String, Object> invite(CurrentUser owner, InviteRequest request) {
-        if (request.email() != null && userRepository.existsByEmailIgnoreCase(request.email())) {
+        if (request.name() == null || request.name().isBlank()) {
+            throw BusinessException.badRequest("Name is required");
+        }
+        if (request.email() == null || request.email().isBlank()) {
+            throw BusinessException.badRequest("Email is required — staff signs in with it");
+        }
+        if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw BusinessException.conflict("A user with this email already exists");
+        }
+        if (request.password() == null || request.password().isBlank()
+                || request.password().length() < 6) {
+            throw BusinessException.badRequest("Password must be at least 6 characters");
+        }
+        if (request.menuCodes() == null || request.menuCodes().isEmpty()) {
+            throw BusinessException.badRequest("Select at least one menu access");
         }
         String roleCode = request.role() == null || request.role().isBlank() ? "STAFF" : request.role().toUpperCase();
         if (roleRepository.findByCode(roleCode).isEmpty()) {
@@ -131,6 +144,7 @@ public class UserService {
                 .provider("local")
                 .shopId(owner.getShopId())
                 .role(roleCode)
+                .status("ACTIVE")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -164,6 +178,12 @@ public class UserService {
         }
         if (request.photoUrl() != null) {
             staff.setPhotoUrl(request.photoUrl().isBlank() ? null : request.photoUrl().trim());
+        }
+        if (request.active() != null) {
+            staff.setStatus(request.active() ? "ACTIVE" : "INACTIVE");
+        }
+        if (request.menuCodes() != null && request.menuCodes().isEmpty()) {
+            throw BusinessException.badRequest("Select at least one menu access");
         }
         staff.setUpdatedAt(LocalDateTime.now());
         userRepository.save(staff);
@@ -206,11 +226,14 @@ public class UserService {
                         UPDATE public.users
                            SET display_name = ?, phone_number = ?,
                                password_hash = COALESCE(?, password_hash),
-                               email_verified = TRUE, updated_at = NOW()
+                               email_verified = TRUE, updated_at = NOW(),
+                               status = ?
                          WHERE external_id = ?
                         """, staff.getName(), staff.getPhone(),
                         rawPassword == null || rawPassword.isBlank() ? null
                                 : passwordEncoder.encode(rawPassword),
+                        staff.getStatus() == null || "ACTIVE".equals(staff.getStatus())
+                                ? "ACTIVE" : "INACTIVE",
                         staff.getId());
             } else {
                 String roleName = staff.getRole() == null ? "STAFF" : staff.getRole().toUpperCase();
@@ -281,6 +304,7 @@ public class UserService {
         json.put("role", u.getRole() == null ? "STAFF" : u.getRole());
         json.put("shopId", u.getShopId() == null ? "" : u.getShopId());
         json.put("photoUrl", u.getPhotoUrl() == null ? "" : u.getPhotoUrl());
+        json.put("active", u.getStatus() == null || "ACTIVE".equals(u.getStatus()));
         json.put("updatedAt", u.getUpdatedAt().toString());
         json.put("menus", userMenuRepository.findMenuCodesByUserId(u.getId()));
         return json;

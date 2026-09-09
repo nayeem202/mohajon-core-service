@@ -104,9 +104,29 @@ public class ShopService {
                     "FORBIDDEN", "Only the shop owner or admin can update store information",
                     org.springframework.http.HttpStatus.FORBIDDEN);
         }
-        Shop shop = shopRepository.findById(user.getShopId())
-                .orElseThrow(() -> new com.haalkhata.core.exception.BusinessException(
-                        "SHOP_NOT_FOUND", "Shop not found", org.springframework.http.HttpStatus.NOT_FOUND));
+        // Auto-provision: a shop row may not exist yet (e.g. legacy user token),
+        // so create it instead of failing with a 404.
+        Shop shop = shopRepository.findById(user.getShopId()).orElseGet(() -> {
+            Shop fresh = Shop.builder()
+                    .shopId(user.getShopId())
+                    .ownerUserId(user.getUserId())
+                    .name(user.getName() == null ? "My Shop" : user.getName() + "'s Shop")
+                    .ownerCount(1)
+                    .totalInvestment(0)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            shopRepository.save(fresh);
+            shopOwnerRepository.save(ShopOwner.builder()
+                    .id(Ids.uuid())
+                    .shopId(fresh.getShopId())
+                    .ownerId(user.getUserId())
+                    .name(user.getName())
+                    .investmentAmount(0)
+                    .build());
+            log.info("SHOP_CREATED_FROM_UPDATE shopId={} owner={}", fresh.getShopId(), user.getUserId());
+            return fresh;
+        });
         if (request.name() != null && !request.name().isBlank()) {
             shop.setName(request.name().trim());
         }

@@ -42,8 +42,16 @@ public class ProductService {
     }
 
     public List<Map<String, Object>> lowStock(CurrentUser user) {
-        return productRepository.findByShopIdAndIsDeletedFalseAndStockQtyLessThanEqual(user.getShopId(), 10)
-                .stream().map(this::toJson).toList();
+        // Per-product threshold, falling back to a default of 10 units when a
+        // product has not configured its own low-stock alert.
+        return productRepository.findByShopIdAndIsDeletedFalseOrderByNameEnAsc(user.getShopId())
+                .stream()
+                .filter(p -> {
+                    int threshold = p.getLowStockAlert() > 0 ? p.getLowStockAlert() : 10;
+                    return p.getStockQty() <= threshold;
+                })
+                .map(this::toJson)
+                .toList();
     }
 
     @Transactional

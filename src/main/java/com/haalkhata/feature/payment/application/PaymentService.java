@@ -3,6 +3,7 @@ package com.haalkhata.feature.payment.application;
 import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
+import com.haalkhata.core.util.MoneyUtil;
 import com.haalkhata.feature.customer.domain.Customer;
 import com.haalkhata.feature.customer.infrastructure.CustomerRepository;
 import com.haalkhata.feature.payment.domain.Payment;
@@ -16,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +35,7 @@ public class PaymentService {
     private final CustomerRepository customerRepository;
     private final SaleRepository saleRepository;
 
-    public record AddPaymentRequest(String customerId, String saleId, double amount,
+    public record AddPaymentRequest(String paymentId, String customerId, String saleId, double amount,
                                     String paymentMethod, String reference) {
     }
 
@@ -55,6 +57,17 @@ public class PaymentService {
 
     @Transactional
     public Map<String, Object> addPayment(CurrentUser user, AddPaymentRequest request) {
+        // Idempotent retry: a duplicate POST with an existing paymentId returns
+        // the already-created payment instead of double-applying it.
+        if (request.paymentId() != null && !request.paymentId().isBlank()) {
+            Optional<Payment> existing = paymentRepository.findById(request.paymentId())
+                    .filter(p -> p.getShopId().equals(user.getShopId()));
+            if (existing.isPresent()) {
+                log.info("PAYMENT_IDEMPOTENT_RETRY paymentId={} shopId={}", request.paymentId(), user.getShopId());
+                return toJson(existing.get());
+            }
+        }
+
         Customer customer = customerRepository
                 .findByCustomerIdAndShopIdAndIsDeletedFalse(request.customerId(), user.getShopId())
                 .orElseThrow(() -> BusinessException.notFound("Customer not found"));
@@ -70,14 +83,30 @@ public class PaymentService {
             throw BusinessException.badRequest("Reference is required for " + paymentMethod.getName());
         }
 
-        double fee = request.amount() * paymentMethod.getFeePercent() / 100;
+        double amount = MoneyUtil.round2(request.amount());
+
+        Sale sale = null;
+        if (request.saleId() != null && !request.saleId().isBlank()) {
+            sale = saleRepository.findBySaleIdAndShopIdAndIsDeletedFalse(request.saleId(), user.getShopId())
+                    .orElseThrow(() -> BusinessException.notFound("Sale not found"));
+            double alreadyPaid = paymentRepository
+                    .findBySaleIdAndShopIdAndIsDeletedFalse(request.saleId(), user.getShopId())
+                    .stream().mapToDouble(Payment::getAmount).sum();
+            double maxPayable = MoneyUtil.round2(Math.max(0, sale.getTotalAmount() - alreadyPaid));
+            if (amount > maxPayable) {
+                throw BusinessException.badRequest("Payment exceeds the outstanding balance for this sale "
+                        + "(outstanding: " + maxPayable + ")");
+            }
+        }
+
         LocalDateTime now = LocalDateTime.now();
         Payment payment = Payment.builder()
-                .paymentId(Ids.uuid())
+                .paymentId(request.paymentId() == null || request.paymentId().isBlank()
+                        ? Ids.uuid() : request.paymentId().trim())
                 .shopId(user.getShopId())
                 .customerId(customer.getCustomerId())
                 .saleId(request.saleId())
-                .amount(request.amount() - fee)
+                .amount(amount)
                 .paymentMethod(method)
                 .reference(request.reference())
                 .createdAt(now)
@@ -86,22 +115,22 @@ public class PaymentService {
                 .build();
         paymentRepository.save(payment);
 
-        if (request.saleId() != null && !request.saleId().isBlank()) {
-            saleRepository.findBySaleIdAndShopIdAndIsDeletedFalse(request.saleId(), user.getShopId())
-                    .ifPresent(sale -> {
-                        double newPaid = sale.getPaidAmount() + request.amount();
-                        double newDue = Math.max(0, sale.getTotalAmount() - newPaid);
-                        sale.setPaidAmount(newPaid);
-                        sale.setDueAmount(newDue);
-                        sale.setPaymentStatus(newDue <= 0 ? "PAID" : "PARTIAL");
-                        sale.setUpdatedAt(now);
-                        saleRepository.save(sale);
-                        log.info("SALE_PAYMENT_APPLIED saleId={} paid={} due={}", sale.getSaleId(), newPaid, newDue);
-                    });
+        if (sale != null) {
+            double newPaid = MoneyUtil.round2(paymentRepository
+                    .findBySaleIdAndShopIdAndIsDeletedFalse(sale.getSaleId(), user.getShopId())
+                    .stream().mapToDouble(Payment::getAmount).sum());
+            double newDue = MoneyUtil.round2(Math.max(0, sale.getTotalAmount() - newPaid));
+            sale.setPaidAmount(newPaid);
+            sale.setDueAmount(newDue);
+            sale.setPaymentStatus(newDue <= 0 ? "PAID" : "PARTIAL");
+            sale.setUpdatedAt(now);
+            saleRepository.save(sale);
+            log.info("SALE_PAYMENT_APPLIED saleId={} paid={} due={}", sale.getSaleId(), newPaid, newDue);
         }
 
+        double fee = request.amount() * paymentMethod.getFeePercent() / 100;
         log.info("PAYMENT_ADDED paymentId={} customer={} amount={} method={} fee={}",
-                payment.getPaymentId(), customer.getName(), request.amount(), method, fee);
+                payment.getPaymentId(), customer.getName(), amount, method, MoneyUtil.round2(fee));
         return toJson(payment);
     }
 
@@ -113,6 +142,24 @@ public class PaymentService {
         payment.setDeleted(true);
         payment.setUpdatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
+
+        // Reverse the payment's effect on the linked sale: paid/due are
+        // recomputed from the remaining active payments.
+        if (payment.getSaleId() != null && !payment.getSaleId().isBlank()) {
+            saleRepository.findBySaleIdAndShopIdAndIsDeletedFalse(payment.getSaleId(), user.getShopId())
+                    .ifPresent(sale -> {
+                        double newPaid = MoneyUtil.round2(paymentRepository
+                                .findBySaleIdAndShopIdAndIsDeletedFalse(sale.getSaleId(), user.getShopId())
+                                .stream().mapToDouble(Payment::getAmount).sum());
+                        double newDue = MoneyUtil.round2(Math.max(0, sale.getTotalAmount() - newPaid));
+                        sale.setPaidAmount(newPaid);
+                        sale.setDueAmount(newDue);
+                        sale.setPaymentStatus(newDue <= 0 ? "PAID" : (newPaid > 0 ? "PARTIAL" : "DUE"));
+                        sale.setUpdatedAt(LocalDateTime.now());
+                        saleRepository.save(sale);
+                        log.info("SALE_PAYMENT_REVERSED saleId={} paid={} due={}", sale.getSaleId(), newPaid, newDue);
+                    });
+        }
         log.info("PAYMENT_DELETED paymentId={} shopId={}", paymentId, user.getShopId());
     }
 
@@ -121,7 +168,7 @@ public class PaymentService {
         json.put("paymentId", p.getPaymentId());
         json.put("customerId", p.getCustomerId());
         json.put("saleId", p.getSaleId());
-        json.put("amount", p.getAmount());
+        json.put("amount", MoneyUtil.round2(p.getAmount()));
         json.put("paymentMethod", p.getPaymentMethod());
         json.put("reference", p.getReference());
         json.put("shopId", p.getShopId());

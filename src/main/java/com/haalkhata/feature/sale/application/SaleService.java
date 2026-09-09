@@ -3,6 +3,7 @@ package com.haalkhata.feature.sale.application;
 import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
+import com.haalkhata.core.util.MoneyUtil;
 import com.haalkhata.feature.customer.domain.Customer;
 import com.haalkhata.feature.customer.infrastructure.CustomerRepository;
 import com.haalkhata.feature.payment.domain.Payment;
@@ -66,6 +67,16 @@ public class SaleService {
 
     @Transactional
     public Map<String, Object> create(CurrentUser user, CreateSaleRequest request) {
+        // Idempotent retry: a duplicate POST with an existing saleId returns
+        // the already-created sale instead of decrementing stock twice.
+        if (request.saleId() != null && !request.saleId().isBlank()) {
+            var existing = saleRepository
+                    .findBySaleIdAndShopIdAndIsDeletedFalse(request.saleId(), user.getShopId());
+            if (existing.isPresent()) {
+                log.info("SALE_IDEMPOTENT_RETRY saleId={} shopId={}", request.saleId(), user.getShopId());
+                return toJson(existing.get());
+            }
+        }
         if (request.items() == null || request.items().isEmpty()) {
             throw BusinessException.badRequest("Sale must contain at least one item");
         }
@@ -75,21 +86,27 @@ public class SaleService {
 
         double subtotal = 0;
         List<SaleItem> items = new ArrayList<>();
+        LocalDateTime stockNow = LocalDateTime.now();
         for (SaleItemRequest item : request.items()) {
+            if (item.qty() <= 0) {
+                throw BusinessException.badRequest("Quantity must be greater than zero for " + item.name());
+            }
+            if (item.qty() != Math.floor(item.qty())) {
+                throw BusinessException.badRequest(
+                        "Fractional quantity is not supported for " + item.name());
+            }
             Product product = productRepository
                     .findByProductIdAndShopIdAndIsDeletedFalse(item.productId(), user.getShopId())
                     .orElseThrow(() -> BusinessException.notFound("Product not found: " + item.name()));
-            if (product.getStockQty() < item.qty()) {
+            if (productRepository.decrementStock(product.getProductId(), user.getShopId(),
+                    (int) item.qty(), stockNow) == 0) {
                 throw new BusinessException("INSUFFICIENT_STOCK",
                         "Insufficient stock for " + product.getNameEn()
                                 + " (available: " + product.getStockQty() + ")");
             }
-            product.setStockQty(product.getStockQty() - (int) item.qty());
-            product.setUpdatedAt(LocalDateTime.now());
-            productRepository.save(product);
 
             double unitPrice = item.unitPrice() > 0 ? item.unitPrice() : product.getSellingPrice();
-            subtotal += item.qty() * unitPrice;
+            subtotal += MoneyUtil.round2(item.qty() * unitPrice);
             items.add(SaleItem.builder()
                     .id(Ids.uuid())
                     .saleId(request.saleId() == null ? "" : request.saleId())
@@ -102,14 +119,14 @@ public class SaleService {
                     .build());
         }
 
-        double discount = request.discount() == null ? 0 : request.discount();
+        double discount = MoneyUtil.round2(request.discount() == null ? 0 : request.discount());
         double vatPercent = request.vatPercent() == null ? 0 : request.vatPercent();
-        double charge = request.charge() == null ? 0 : request.charge();
-        double taxable = subtotal - discount;
-        double vat = taxable * vatPercent / 100;
-        double total = Math.max(0, taxable) + vat + charge;
-        double paid = Math.min(request.paidAmount() == null ? 0 : request.paidAmount(), total);
-        double due = total - paid;
+        double charge = MoneyUtil.round2(request.charge() == null ? 0 : request.charge());
+        double taxable = MoneyUtil.round2(Math.max(0, subtotal - discount));
+        double vat = MoneyUtil.round2(taxable * vatPercent / 100);
+        double total = MoneyUtil.round2(taxable + vat + charge);
+        double paid = MoneyUtil.round2(Math.min(request.paidAmount() == null ? 0 : request.paidAmount(), total));
+        double due = MoneyUtil.round2(Math.max(0, total - paid));
         String status = due <= 0 ? "PAID" : (paid > 0 ? "PARTIAL" : "DUE");
 
         LocalDateTime now = LocalDateTime.now();
@@ -158,7 +175,7 @@ public class SaleService {
             log.info("PAYMENT_RECORDED paymentId={} amount={} method={}", payment.getPaymentId(), paid, method);
         }
 
-        customer.setTotalSpent(customer.getTotalSpent() + total);
+        customer.setTotalSpent(MoneyUtil.round2(customer.getTotalSpent() + total));
         customer.setUpdatedAt(now);
         customerRepository.save(customer);
 
