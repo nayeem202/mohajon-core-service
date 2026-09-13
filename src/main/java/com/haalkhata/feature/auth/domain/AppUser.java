@@ -54,8 +54,9 @@ public class AppUser {
     @Column(nullable = false, length = 30)
     private String role;
 
+    @Builder.Default
     @Column(name = "status", nullable = false, length = 20)
-    private String status;
+    private String status = "ACTIVE";
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

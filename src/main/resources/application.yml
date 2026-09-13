@@ -54,6 +54,14 @@ app:
   gemini-api-key: ${GEMINI_API_KEY:}
   gemini-model: ${GEMINI_MODEL:gemini-2.5-flash}
   log-request-body: ${LOG_REQUEST_BODY:true}
+  bkash:
+    base-url: ${BKASH_BASE_URL:https://tokenized.sandbox.bka.sh/v1.2.0-beta}
+    app-key: ${BKASH_APP_KEY:4f6o0cjiki2rfm34kfdadl1eqq}
+    app-secret: ${BKASH_APP_SECRET:2is7hdktrekvrbljjh44ll3d9l1dtjo4pasmjvs5vl5qr3fug4b}
+    username: ${BKASH_USERNAME:sandboxTokenizedUser02}
+    password: ${BKASH_PASSWORD:sandboxTokenizedUser02@12345}
+    callback-url: ${BKASH_CALLBACK_URL:https://callback.example.com/api/v1/bkash/callback}
+    sandbox: ${BKASH_SANDBOX:true}
 
 logging:
   level:

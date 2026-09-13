@@ -1,0 +1,1 @@
+ALTER TABLE payment_transaction ADD COLUMN IF NOT EXISTS bkash_url VARCHAR(500);

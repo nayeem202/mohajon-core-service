@@ -187,6 +187,9 @@ public class AuthService {
                 .build();
         registrationRepository.save(registration);
 
+        // Trial is granted lazily by SubscriptionService.status() on the
+        // shop's first contact — the auth service stays business-free.
+
         log.info("EMAIL_VERIFIED userId={} email={}", user.getId(), email);
     }
 

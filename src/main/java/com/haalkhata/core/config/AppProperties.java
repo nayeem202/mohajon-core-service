@@ -18,4 +18,16 @@ public class AppProperties {
     private String mailProvider = "console";
     private String googleClientId = "";
     private boolean logRequestBody = true;
+    private Bkash bkash = new Bkash();
+
+    @Data
+    public static class Bkash {
+        private String baseUrl = "";
+        private String appKey = "";
+        private String appSecret = "";
+        private String username = "";
+        private String password = "";
+        private String callbackUrl = "";
+        private boolean sandbox = true;
+    }
 }
