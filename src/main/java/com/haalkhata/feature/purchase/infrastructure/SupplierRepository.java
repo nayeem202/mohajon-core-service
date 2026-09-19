@@ -12,7 +12,7 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
 
     Optional<Supplier> findBySupplierIdAndShopIdAndIsDeletedFalse(String supplierId, String shopId);
 
-    List<Supplier> findByShopIdAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
+    List<Supplier> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Supplier> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

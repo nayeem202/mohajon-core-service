@@ -10,7 +10,7 @@ public interface VendorPurchaseRepository extends JpaRepository<VendorPurchase, 
 
     List<VendorPurchase> findByShopIdAndVendorIdAndIsDeletedFalseOrderByDateDesc(String shopId, String vendorId);
 
-    List<VendorPurchase> findByShopIdAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
+    List<VendorPurchase> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<VendorPurchase> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

@@ -9,7 +9,7 @@ public interface VendorPaymentRepository extends JpaRepository<VendorPayment, St
 
     List<VendorPayment> findByShopIdAndVendorIdAndIsDeletedFalseOrderByDateDesc(String shopId, String vendorId);
 
-    List<VendorPayment> findByShopIdAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
+    List<VendorPayment> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<VendorPayment> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

@@ -32,6 +32,7 @@ import com.haalkhata.feature.vendor.domain.VendorPurchase;
 import com.haalkhata.feature.vendor.infrastructure.VendorPaymentRepository;
 import com.haalkhata.feature.vendor.infrastructure.VendorPurchaseRepository;
 import com.haalkhata.feature.vendor.infrastructure.VendorRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -107,14 +108,26 @@ public class SyncService {
         return saved;
     }
 
-    public List<Map<String, Object>> pull(CurrentUser user, String collection, LocalDateTime after, Integer limit) {
+    public record PullResult(List<Map<String, Object>> documents, LocalDateTime serverNow) {
+    }
+
+    /**
+     * Delta pull. Every row returned has {@code updatedAt > after}. The
+     * response watermark ({@code serverNow}) is captured BEFORE the query so
+     * it is guaranteed to be <= any row that did not make it into this
+     * response — clients can safely resume from it without skipping rows.
+     * Rows are returned in ascending {@code updatedAt} order so client-side
+     * paging over {@code hasMore} never skips entries with equal timestamps.
+     */
+    public PullResult pull(CurrentUser user, String collection, LocalDateTime after, Integer limit) {
         if (!COLLECTIONS.contains(collection)) {
             throw BusinessException.badRequest("Unknown collection: " + collection);
         }
+        LocalDateTime cutoff = LocalDateTime.now();
         List<Map<String, Object>> docs = switch (collection) {
             case "products" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                productRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                productRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(productJson(p)));
                 productRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(productJson(p)));
@@ -122,7 +135,7 @@ public class SyncService {
             }
             case "customers" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                customerRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                customerRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(c -> d.add(customerJson(c)));
                 customerRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(c -> d.add(customerJson(c)));
@@ -130,7 +143,7 @@ public class SyncService {
             }
             case "sales" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                saleRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                saleRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(s -> d.add(saleJson(s)));
                 saleRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(s -> d.add(saleJson(s)));
@@ -138,7 +151,7 @@ public class SyncService {
             }
             case "customerLedgerEntries" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                ledgerRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                ledgerRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(e -> d.add(ledgerJson(e)));
                 ledgerRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(e -> d.add(ledgerJson(e)));
@@ -146,7 +159,7 @@ public class SyncService {
             }
             case "payments" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                paymentRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                paymentRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(paymentJson(p)));
                 paymentRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(paymentJson(p)));
@@ -154,7 +167,7 @@ public class SyncService {
             }
             case "purchases" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                purchaseRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                purchaseRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(purchaseJson(p)));
                 purchaseRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(purchaseJson(p)));
@@ -162,7 +175,7 @@ public class SyncService {
             }
             case "suppliers" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                supplierRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                supplierRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(s -> d.add(supplierJson(s)));
                 supplierRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(s -> d.add(supplierJson(s)));
@@ -170,7 +183,7 @@ public class SyncService {
             }
             case "vendors" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                vendorRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                vendorRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(v -> d.add(vendorJson(v)));
                 vendorRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(v -> d.add(vendorJson(v)));
@@ -178,7 +191,7 @@ public class SyncService {
             }
             case "vendorPurchases" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                vendorPurchaseRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                vendorPurchaseRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPurchaseJson(p)));
                 vendorPurchaseRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPurchaseJson(p)));
@@ -186,7 +199,7 @@ public class SyncService {
             }
             case "vendorPayments" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                vendorPaymentRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                vendorPaymentRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPaymentJson(p)));
                 vendorPaymentRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPaymentJson(p)));
@@ -194,7 +207,7 @@ public class SyncService {
             }
             case "expenses" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                expenseRepository.findByShopIdAndUpdatedAtGreaterThan(user.getShopId(), after)
+                expenseRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(e -> d.add(expenseJson(e)));
                 expenseRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(e -> d.add(expenseJson(e)));
@@ -207,15 +220,17 @@ public class SyncService {
         // duplicates rows between pages, and bound the in-memory payload to
         // the page size the client actually consumes.
         List<Map<String, Object>> paged = new ArrayList<>(docs);
-        paged.sort(Comparator.comparing(
-                d -> TimeUtil.parse(String.valueOf(d.get("updatedAt")), LocalDateTime.MIN)));
+        paged.sort(Comparator
+                .comparing((Map<String, Object> d) ->
+                        TimeUtil.parse(String.valueOf(d.get("updatedAt")), LocalDateTime.MIN))
+                .thenComparing(d -> String.valueOf(d.get(idKeyFor(collection)))));
         int cap = limit != null && limit > 0 ? limit + 1 : Integer.MAX_VALUE;
         if (paged.size() > cap) {
             paged = new ArrayList<>(paged.subList(0, cap));
         }
         log.info("SYNC_PULL collection={} shopId={} after={} docs={}",
                 collection, user.getShopId(), after, paged.size());
-        return paged;
+        return new PullResult(paged, cutoff);
     }
 
     // -------- upserts --------
@@ -244,6 +259,7 @@ public class SyncService {
         }
         product.setStockQty(stock);
         product.setLowStockAlert(doc.get("lowStockAlert") == null ? 0 : ((Number) doc.get("lowStockAlert")).intValue());
+        product.setExpiryDate(expiryFrom(doc));
         product.setDeleted(bool(doc, "isDeleted"));
         product.setUpdatedAt(time(doc, "updatedAt"));
         productRepository.save(product);
@@ -513,10 +529,28 @@ public class SyncService {
         json.put("sellingPrice", p.getSellingPrice());
         json.put("stockQty", p.getStockQty());
         json.put("lowStockAlert", p.getLowStockAlert());
+        json.put("expiryDate", p.getExpiryDate() == null ? null : p.getExpiryDate().toString());
         json.put("shopId", p.getShopId());
         json.put("updatedAt", p.getUpdatedAt().format(ISO));
         json.put("isDeleted", p.isDeleted());
         return json;
+    }
+
+    private LocalDate expiryFrom(Map<String, Object> doc) {
+        Object value = doc.get("expiryDate");
+        if (value == null) {
+            return null;
+        }
+        String raw = String.valueOf(value).trim();
+        if (raw.isEmpty()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(raw.length() >= 10 ? raw.substring(0, 10) : raw);
+        } catch (Exception e) {
+            log.warn("SYNC_PRODUCT_EXPIRY_PARSE_FAILED value={}", raw);
+            return null;
+        }
     }
 
     private Map<String, Object> customerJson(Customer c) {

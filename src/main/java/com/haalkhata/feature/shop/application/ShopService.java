@@ -168,7 +168,7 @@ public class ShopService {
         String shopId = user.getShopId();
         purchaseRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(shopId)
                 .forEach(p -> purchaseItemRepository.deleteByPurchaseId(p.getPurchaseId()));
-        saleRepository.findByShopIdAndUpdatedAtGreaterThan(shopId, LocalDateTime.of(2000, 1, 1, 0, 0))
+        saleRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(shopId, LocalDateTime.of(2000, 1, 1, 0, 0))
                 .forEach(s -> saleItemRepository.deleteBySaleId(s.getSaleId()));
         // Children before parents: investment_members cascades from investments.
         memberRepository.deleteByShopId(shopId);

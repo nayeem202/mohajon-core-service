@@ -12,7 +12,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, String> {
 
     Optional<Purchase> findByPurchaseIdAndShopIdAndIsDeletedFalse(String purchaseId, String shopId);
 
-    List<Purchase> findByShopIdAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
+    List<Purchase> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Purchase> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

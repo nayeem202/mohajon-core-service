@@ -15,7 +15,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, String> {
     List<Expense> findByShopIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(
             String shopId, LocalDateTime from, LocalDateTime to);
 
-    List<Expense> findByShopIdAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
+    List<Expense> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Expense> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

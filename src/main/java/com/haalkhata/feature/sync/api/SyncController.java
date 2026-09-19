@@ -4,6 +4,7 @@ import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.TimeUtil;
 import com.haalkhata.feature.sync.application.SyncService;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,8 @@ public class SyncController {
                                     @RequestParam(required = false) String after,
                                     @RequestParam(required = false) Integer limit) {
         LocalDateTime afterTime = TimeUtil.parse(after, LocalDateTime.of(2000, 1, 1, 0, 0));
-        List<Map<String, Object>> all = syncService.pull(user, collection, afterTime, limit);
+        SyncService.PullResult result = syncService.pull(user, collection, afterTime, limit);
+        List<Map<String, Object>> all = result.documents();
         // Legacy clients omit `limit` and get the full result set. Paging
         // clients pass `limit` and follow `hasMore` until it is false.
         boolean hasMore = false;
@@ -44,7 +46,13 @@ public class SyncController {
             documents = all.subList(0, limit);
             hasMore = true;
         }
-        return Map.of("collection", collection, "documents", documents, "hasMore", hasMore);
+        return Map.of(
+                "collection", collection,
+                "documents", documents,
+                "hasMore", hasMore,
+                // Watermark captured before the query: >= every returned row,
+                // so clients can resume from it without missing anything.
+                "serverNow", result.serverNow().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
     }
 
     public record PushRequest(String collection, List<Map<String, Object>> documents) {

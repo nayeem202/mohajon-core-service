@@ -13,7 +13,7 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
 
     List<Payment> findBySaleIdAndShopIdAndIsDeletedFalse(String saleId, String shopId);
 
-    List<Payment> findByShopIdAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
+    List<Payment> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Payment> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 
