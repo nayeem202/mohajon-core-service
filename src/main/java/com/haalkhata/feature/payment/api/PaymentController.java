@@ -56,12 +56,13 @@ public class PaymentController {
     }
 
     @PutMapping("/api/v1/payment-methods")
-    public Map<String, Object> upsertMethod(@Valid @RequestBody PaymentMethodRequest request) {
-        return paymentService.upsertMethod(request);
+    public Map<String, Object> upsertMethod(@AuthenticationPrincipal CurrentUser user,
+                                            @Valid @RequestBody PaymentMethodRequest request) {
+        return paymentService.upsertMethod(user, request);
     }
 
     @DeleteMapping("/api/v1/payment-methods/{code}")
-    public void deleteMethod(@PathVariable String code) {
-        paymentService.deleteMethod(code);
+    public void deleteMethod(@AuthenticationPrincipal CurrentUser user, @PathVariable String code) {
+        paymentService.deleteMethod(user, code);
     }
 }

@@ -10,6 +10,9 @@ import com.haalkhata.feature.payment.domain.Payment;
 import com.haalkhata.feature.payment.domain.PaymentMethod;
 import com.haalkhata.feature.payment.infrastructure.PaymentMethodRepository;
 import com.haalkhata.feature.payment.infrastructure.PaymentRepository;
+import com.haalkhata.feature.auth.domain.AppUser;
+import com.haalkhata.feature.auth.infrastructure.AppUserRepository;
+import com.haalkhata.feature.guardian.application.GuardianService;
 import com.haalkhata.feature.sale.domain.Sale;
 import com.haalkhata.feature.sale.infrastructure.SaleRepository;
 import java.time.LocalDateTime;
@@ -34,6 +37,8 @@ public class PaymentService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final CustomerRepository customerRepository;
     private final SaleRepository saleRepository;
+    private final AppUserRepository userRepository;
+    private final GuardianService guardianService;
 
     public record AddPaymentRequest(String paymentId, String customerId, String saleId, double amount,
                                     String paymentMethod, String reference) {
@@ -84,6 +89,9 @@ public class PaymentService {
         }
 
         double amount = MoneyUtil.round2(request.amount());
+        if (amount <= 0) {
+            throw BusinessException.badRequest("Payment amount must be greater than zero");
+        }
 
         Sale sale = null;
         if (request.saleId() != null && !request.saleId().isBlank()) {
@@ -131,6 +139,8 @@ public class PaymentService {
         double fee = request.amount() * paymentMethod.getFeePercent() / 100;
         log.info("PAYMENT_ADDED paymentId={} customer={} amount={} method={} fee={}",
                 payment.getPaymentId(), customer.getName(), amount, method, MoneyUtil.round2(fee));
+        guardianService.record(user, "PAYMENT_ADDED", "PAYMENT", payment.getPaymentId(), amount,
+                Map.of("method", method, "saleId", request.saleId() == null ? "" : request.saleId()));
         return toJson(payment);
     }
 
@@ -161,6 +171,7 @@ public class PaymentService {
                     });
         }
         log.info("PAYMENT_DELETED paymentId={} shopId={}", paymentId, user.getShopId());
+        guardianService.record(user, "DELETE", "PAYMENT", paymentId, payment.getAmount(), Map.of("reason", "manual_delete"));
     }
 
     public Map<String, Object> toJson(Payment p) {
@@ -199,7 +210,8 @@ public class PaymentService {
     }
 
     @Transactional
-    public Map<String, Object> upsertMethod(PaymentMethodRequest request) {
+    public Map<String, Object> upsertMethod(CurrentUser user, PaymentMethodRequest request) {
+        requireOwner(user);
         if (request.code() == null || request.code().isBlank()) {
             throw BusinessException.badRequest("Payment method code is required");
         }
@@ -241,11 +253,22 @@ public class PaymentService {
     }
 
     @Transactional
-    public void deleteMethod(String code) {
+    public void deleteMethod(CurrentUser user, String code) {
+        requireOwner(user);
         if (!paymentMethodRepository.existsById(code)) {
             throw BusinessException.notFound("Payment method not found");
         }
         paymentMethodRepository.deleteById(code);
         log.info("PAYMENT_METHOD_DELETED code={}", code);
+    }
+
+    /** Mutations to the shared payment-method catalog are owner-only. */
+    private void requireOwner(CurrentUser user) {
+        String role = userRepository.findById(user.getUserId())
+                .map(u -> u.getRole() == null ? "" : u.getRole().toUpperCase())
+                .orElse(user.getRole() == null ? "" : user.getRole().toUpperCase());
+        if (!"OWNER".equals(role) && !"ADMIN".equals(role)) {
+            throw BusinessException.forbidden("Only the shop owner can configure payment methods");
+        }
     }
 }

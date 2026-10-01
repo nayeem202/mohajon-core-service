@@ -110,7 +110,7 @@ class SyncServicePullTest {
                     .filter(p -> !p.isDeleted() && p.getUpdatedAt().isAfter(after))
                     .toList();
         };
-        when(productRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(eq("shop_1"), any()))
+        when(productRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(eq("shop_1"), any()))
                 .thenAnswer(liveActive);
         when(productRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(eq("shop_1"), any()))
                 .thenAnswer(liveDeleted);

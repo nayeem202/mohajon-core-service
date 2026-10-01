@@ -331,6 +331,9 @@ public class AuthService {
 
     @Transactional
     public void changePassword(CurrentUser currentUser, ChangePasswordRequest request) {
+        if (currentUser == null || currentUser.getUserId() == null || currentUser.getUserId().isBlank()) {
+            throw BusinessException.unauthorized("Authentication required");
+        }
         AppUser user = userRepository.findById(currentUser.getUserId())
                 .orElseThrow(() -> BusinessException.notFound("User not found"));
         if (user.getPasswordHash() == null || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {

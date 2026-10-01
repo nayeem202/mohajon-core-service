@@ -70,6 +70,6 @@ public class ProductController {
         return new UpsertRequest(productId, request.nameEn(), request.nameBn(), request.barcode(),
                 request.category(), request.unit(), request.imagePath(), request.buyingPrice(),
                 request.purchasePrice(), request.sellingPrice(), request.stockQty(),
-                request.lowStockAlert(), request.isDeleted());
+                request.lowStockAlert(), request.expiryDate(), request.isDeleted());
     }
 }

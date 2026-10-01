@@ -17,7 +17,7 @@ public interface SaleRepository extends JpaRepository<Sale, String> {
 
     Optional<Sale> findBySaleIdAndShopIdAndIsDeletedFalse(String saleId, String shopId);
 
-    List<Sale> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
+    List<Sale> findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Sale> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

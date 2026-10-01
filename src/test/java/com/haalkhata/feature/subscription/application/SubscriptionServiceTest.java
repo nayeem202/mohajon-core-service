@@ -380,9 +380,8 @@ class SubscriptionServiceTest {
                 .startDate(LocalDateTime.now().minusDays(5))
                 .endDate(LocalDateTime.now().plusDays(25).plusHours(1))
                 .createdAt(LocalDateTime.now().minusDays(5)).updatedAt(LocalDateTime.now().minusDays(5)).build();
-        when(subscriptionRepository.findTopByShopIdAndStatusOrderByEndDateDesc("shop_1", "ACTIVE"))
-                .thenReturn(Optional.of(active));
-        when(subscriptionRepository.findByShopIdOrderByCreatedAtDesc("shop_1")).thenReturn(List.of(active));
+        when(subscriptionRepository.findByShopIdOrderByCreatedAtDesc("shop_1"))
+                .thenReturn(List.of(active));
         when(planRepository.findById("MONTHLY")).thenReturn(Optional.of(monthlyPlan));
 
         Map<String, Object> result = service.status(user);

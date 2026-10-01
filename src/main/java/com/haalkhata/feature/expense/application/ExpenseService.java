@@ -3,8 +3,10 @@ package com.haalkhata.feature.expense.application;
 import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
+import com.haalkhata.core.util.TimeUtil;
 import com.haalkhata.feature.expense.domain.Expense;
 import com.haalkhata.feature.expense.infrastructure.ExpenseRepository;
+import com.haalkhata.feature.guardian.application.GuardianService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -23,6 +25,7 @@ public class ExpenseService {
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     private final ExpenseRepository expenseRepository;
+    private final GuardianService guardianService;
 
     public record UpsertRequest(String expenseId, String description, Double amount,
                                 String categoryId, String categoryLabel, String date,
@@ -64,7 +67,7 @@ public class ExpenseService {
         expense.setCategoryId(request.categoryId());
         expense.setCategoryLabel(request.categoryLabel());
         if (request.date() != null && !request.date().isBlank()) {
-            expense.setDate(LocalDateTime.parse(request.date()));
+            expense.setDate(TimeUtil.parse(request.date(), expense.getDate()));
         }
         expense.setNotes(request.notes());
         expense.setDeleted(request.isDeleted() != null && request.isDeleted());
@@ -72,6 +75,8 @@ public class ExpenseService {
         expenseRepository.save(expense);
         log.info("EXPENSE_{} expenseId={} shopId={} amount={}",
                 isNew ? "CREATED" : "UPDATED", expense.getExpenseId(), user.getShopId(), expense.getAmount());
+        guardianService.record(user, isNew ? "EXPENSE_CREATED" : "EXPENSE_UPDATED", "EXPENSE", expense.getExpenseId(), expense.getAmount(),
+                Map.of("category", expense.getCategoryLabel() == null ? "" : expense.getCategoryLabel()));
         return toJson(expense);
     }
 
@@ -83,6 +88,7 @@ public class ExpenseService {
         expense.setUpdatedAt(LocalDateTime.now());
         expenseRepository.save(expense);
         log.info("EXPENSE_DELETED expenseId={} shopId={}", expenseId, user.getShopId());
+        guardianService.record(user, "DELETE", "EXPENSE", expenseId, expense.getAmount(), Map.of("reason", "manual_delete"));
     }
 
     public Map<String, Object> toJson(Expense e) {

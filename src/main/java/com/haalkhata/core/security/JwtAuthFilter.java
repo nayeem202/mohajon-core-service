@@ -36,15 +36,44 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 Claims claims = jwtService.parse(token);
                 String userId = claims.getSubject();
+                if (userId == null || userId.isBlank()) {
+                    chain.doFilter(request, response);
+                    return;
+                }
                 String email = claims.get("email", String.class);
                 String name = claims.get("name", String.class);
-                String shopId = claims.get("shopId", String.class);
-                if (shopId == null || shopId.isBlank()) {
-                    shopId = resolveShopId(userId);
-                }
+                String claimShopId = claims.get("shopId", String.class);
+                String claimRole = claims.get("role", String.class);
                 @SuppressWarnings("unchecked")
-                List<String> roles = claims.get("roles", List.class);
-                String role = claims.get("role", String.class);
+                List<String> claimRoles = claims.get("roles", List.class);
+
+                // DB is authoritative: active users whose shopId/role may have
+                // changed get the fresh values, and deleted/inactive users are
+                // rejected even if their JWT is still unexpired. Users that only
+                // exist in the auth-service (not yet provisioned here) fall back
+                // to the token claims.
+                String shopId = claimShopId;
+                String role = claimRole;
+                List<String> roles = claimRoles;
+                var dbUser = userRepository.findById(userId).orElse(null);
+                if (dbUser != null) {
+                    if (!"ACTIVE".equals(dbUser.getStatus())) {
+                        log.debug("JWT rejected: user {} is {}", userId, dbUser.getStatus());
+                        chain.doFilter(request, response);
+                        return;
+                    }
+                    if (dbUser.getShopId() != null && !dbUser.getShopId().isBlank()) {
+                        shopId = dbUser.getShopId();
+                    }
+                    if (dbUser.getRole() != null && !dbUser.getRole().isBlank()) {
+                        role = dbUser.getRole();
+                    }
+                }
+                if (shopId == null || shopId.isBlank()) {
+                    shopId = dbUser != null && dbUser.getShopId() != null && !dbUser.getShopId().isBlank()
+                            ? dbUser.getShopId()
+                            : resolveShopId(userId);
+                }
                 if (role == null && roles != null && !roles.isEmpty()) {
                     role = roles.get(0);
                 }

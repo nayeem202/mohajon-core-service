@@ -3,6 +3,7 @@ package com.haalkhata.feature.vendor.application;
 import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
+import com.haalkhata.core.util.TimeUtil;
 import com.haalkhata.feature.vendor.domain.Vendor;
 import com.haalkhata.feature.vendor.domain.VendorPayment;
 import com.haalkhata.feature.vendor.domain.VendorPurchase;
@@ -125,7 +126,7 @@ public class VendorService {
                 .vendorId(vendorId)
                 .amount(request.amount())
                 .date(request.date() == null || request.date().isBlank()
-                        ? now : LocalDateTime.parse(request.date()))
+                        ? now : TimeUtil.parse(request.date(), now))
                 .status(request.status() == null || request.status().isBlank()
                         ? "PENDING" : request.status().toUpperCase())
                 .notes(request.notes())
@@ -156,7 +157,7 @@ public class VendorService {
                 .vendorId(vendorId)
                 .amount(request.amount())
                 .date(request.date() == null || request.date().isBlank()
-                        ? now : LocalDateTime.parse(request.date()))
+                        ? now : TimeUtil.parse(request.date(), now))
                 .method(request.method())
                 .reference(request.reference())
                 .notes(request.notes())

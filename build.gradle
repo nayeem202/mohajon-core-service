@@ -10,7 +10,7 @@ description = 'Haalkhata backend service - all app APIs migrated from Firebase'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 

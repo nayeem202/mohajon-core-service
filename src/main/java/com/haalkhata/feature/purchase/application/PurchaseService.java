@@ -154,8 +154,22 @@ public class PurchaseService {
     public void delete(CurrentUser user, String purchaseId) {
         Purchase purchase = purchaseRepository.findByPurchaseIdAndShopIdAndIsDeletedFalse(purchaseId, user.getShopId())
                 .orElseThrow(() -> BusinessException.notFound("Purchase not found"));
+        LocalDateTime now = LocalDateTime.now();
+        // Reverse the stock added by this purchase. If any item has since been
+        // sold below the purchased quantity the whole delete is rolled back,
+        // so stock never silently goes negative.
+        for (PurchaseItem item : purchaseItemRepository.findByPurchaseId(purchaseId)) {
+            if (item.getProductId() != null && !item.getProductId().isBlank()) {
+                int affected = productRepository.decrementStock(item.getProductId(), user.getShopId(),
+                        (int) item.getQty(), now);
+                if (affected == 0) {
+                    throw BusinessException.badRequest("Cannot delete purchase: stock for "
+                            + item.getName() + " has already been reduced below the purchased quantity");
+                }
+            }
+        }
         purchase.setDeleted(true);
-        purchase.setUpdatedAt(LocalDateTime.now());
+        purchase.setUpdatedAt(now);
         purchaseRepository.save(purchase);
         log.info("PURCHASE_DELETED purchaseId={} shopId={}", purchaseId, user.getShopId());
     }

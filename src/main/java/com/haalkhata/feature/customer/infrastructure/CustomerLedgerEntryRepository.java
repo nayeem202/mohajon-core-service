@@ -10,7 +10,7 @@ public interface CustomerLedgerEntryRepository extends JpaRepository<CustomerLed
     List<CustomerLedgerEntry> findByShopIdAndCustomerIdAndIsDeletedFalseOrderByCreatedAtAsc(
             String shopId, String customerId);
 
-    List<CustomerLedgerEntry> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
+    List<CustomerLedgerEntry> findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<CustomerLedgerEntry> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

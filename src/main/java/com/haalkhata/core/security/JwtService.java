@@ -33,7 +33,7 @@ public class JwtService {
     public String issueAccessToken(String userId, String email, String name, String shopId, String role, List<String> roles) {
         Instant now = Instant.now();
         Instant expiry = now.plus(Duration.ofMinutes(props.getAccessTokenMinutes()));
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId)
                 .claim("email", email)
                 .claim("name", name)
@@ -42,27 +42,44 @@ public class JwtService {
                 .claim("roles", roles)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
-                .signWith(key)
-                .compact();
+                .signWith(key);
+        if (props.getJwtIssuer() != null && !props.getJwtIssuer().isBlank()) {
+            builder.issuer(props.getJwtIssuer()).audience().add(props.getJwtIssuer()).and();
+        }
+        return builder.compact();
     }
 
     public Claims parse(String token) throws JwtException {
         try {
-            return verifyWith(key, token);
+            return verifySelf(token);
         } catch (JwtException ex) {
+            // Tokens minted by the auth-service: shared-secret trust, no
+            // issuer/audience requirement so rotation stays compatible.
             if (trustedKey != null) {
-                return verifyWith(trustedKey, token);
+                return verifyWith(trustedKey, token, null);
             }
             throw ex;
         }
     }
 
-    private Claims verifyWith(SecretKey secretKey, String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+    private Claims verifySelf(String token) {
+        Claims claims = verifyWith(key, token, props.getJwtIssuer());
+        var audiences = claims.getAudience();
+        if (props.getJwtIssuer() != null && !props.getJwtIssuer().isBlank()
+                && audiences != null && !audiences.isEmpty()
+                && !audiences.contains(props.getJwtIssuer())) {
+            throw new JwtException("Unexpected audience: " + audiences);
+        }
+        return claims;
+    }
+
+    private Claims verifyWith(SecretKey secretKey, String token, String expectedIssuer) {
+        var builder = Jwts.parser()
+                .verifyWith(secretKey);
+        if (expectedIssuer != null && !expectedIssuer.isBlank()) {
+            builder.requireIssuer(expectedIssuer);
+        }
+        return builder.build().parseSignedClaims(token).getPayload();
     }
 
     public String generateRefreshToken() {

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -59,6 +60,9 @@ public class Product {
 
     @Column(name = "low_stock_alert", nullable = false)
     private int lowStockAlert;
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;

@@ -4,6 +4,11 @@ import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
 import com.haalkhata.feature.customer.infrastructure.CustomerLedgerEntryRepository;
 import com.haalkhata.feature.customer.infrastructure.CustomerRepository;
+import com.haalkhata.feature.customer.infrastructure.DueRecoveryFollowUpRepository;
+import com.haalkhata.feature.customer.infrastructure.DueRecoveryPlanRepository;
+import com.haalkhata.feature.guardian.infrastructure.GuardianAuditEventRepository;
+import com.haalkhata.feature.closing.infrastructure.DailyCashClosingRepository;
+import com.haalkhata.feature.coach.infrastructure.BusinessCoachInsightRepository;
 import com.haalkhata.feature.expense.infrastructure.ExpenseRepository;
 import com.haalkhata.feature.investment.infrastructure.InvestmentCategoryRepository;
 import com.haalkhata.feature.investment.infrastructure.InvestmentMemberRepository;
@@ -15,6 +20,8 @@ import com.haalkhata.feature.payment.infrastructure.PaymentRepository;
 import com.haalkhata.feature.product.infrastructure.ProductRepository;
 import com.haalkhata.feature.purchase.infrastructure.PurchaseItemRepository;
 import com.haalkhata.feature.purchase.infrastructure.PurchaseRepository;
+import com.haalkhata.feature.purchase.infrastructure.PurchaseOrderItemRepository;
+import com.haalkhata.feature.purchase.infrastructure.PurchaseOrderRepository;
 import com.haalkhata.feature.purchase.infrastructure.SupplierRepository;
 import com.haalkhata.feature.sale.infrastructure.SaleItemRepository;
 import com.haalkhata.feature.sale.infrastructure.SaleRepository;
@@ -46,12 +53,16 @@ public class ShopService {
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final CustomerLedgerEntryRepository ledgerRepository;
+    private final DueRecoveryPlanRepository dueRecoveryPlanRepository;
+    private final DueRecoveryFollowUpRepository dueRecoveryFollowUpRepository;
     private final SaleRepository saleRepository;
     private final SaleItemRepository saleItemRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final PurchaseRepository purchaseRepository;
     private final PurchaseItemRepository purchaseItemRepository;
+    private final PurchaseOrderItemRepository purchaseOrderItemRepository;
+    private final PurchaseOrderRepository purchaseOrderRepository;
     private final SupplierRepository supplierRepository;
     private final ExpenseRepository expenseRepository;
     private final VendorRepository vendorRepository;
@@ -62,6 +73,9 @@ public class ShopService {
     private final InvestorRepository investorRepository;
     private final InvestmentCategoryRepository categoryRepository;
     private final PayoutRepository payoutRepository;
+    private final BusinessCoachInsightRepository businessCoachInsightRepository;
+    private final GuardianAuditEventRepository guardianAuditEventRepository;
+    private final DailyCashClosingRepository dailyCashClosingRepository;
 
     public record UpdateShopRequest(String name, String location, String phoneNumber, String imagePath,
                                     List<OwnerDto> owners) {
@@ -168,7 +182,7 @@ public class ShopService {
         String shopId = user.getShopId();
         purchaseRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(shopId)
                 .forEach(p -> purchaseItemRepository.deleteByPurchaseId(p.getPurchaseId()));
-        saleRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(shopId, LocalDateTime.of(2000, 1, 1, 0, 0))
+        saleRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(shopId, LocalDateTime.of(2000, 1, 1, 0, 0))
                 .forEach(s -> saleItemRepository.deleteBySaleId(s.getSaleId()));
         // Children before parents: investment_members cascades from investments.
         memberRepository.deleteByShopId(shopId);
@@ -181,12 +195,20 @@ public class ShopService {
         vendorRepository.deleteByShopId(shopId);
         productRepository.deleteByShopId(shopId);
         customerRepository.deleteByShopId(shopId);
+        dueRecoveryFollowUpRepository.deleteByShopId(shopId);
+        dueRecoveryPlanRepository.deleteByShopId(shopId);
         ledgerRepository.deleteByShopId(shopId);
         saleRepository.deleteByShopId(shopId);
         paymentRepository.deleteByShopId(shopId);
         purchaseRepository.deleteByShopId(shopId);
+        purchaseOrderRepository.findByShopIdOrderByCreatedAtDesc(shopId)
+                .forEach(order -> purchaseOrderItemRepository.deleteByOrderId(order.getOrderId()));
+        purchaseOrderRepository.deleteByShopId(shopId);
         supplierRepository.deleteByShopId(shopId);
         expenseRepository.deleteByShopId(shopId);
+        businessCoachInsightRepository.deleteByShopId(shopId);
+        guardianAuditEventRepository.deleteByShopId(shopId);
+        dailyCashClosingRepository.deleteByShopId(shopId);
         shopOwnerRepository.deleteByShopId(shopId);
         log.info("SHOP_DATA_CLEARED shopId={} by={}", shopId, user.getUserId());
     }

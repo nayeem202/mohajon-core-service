@@ -9,6 +9,7 @@ public class AppProperties {
 
     private String jwtSecret;
     private String trustedJwtSecret;
+    private String jwtIssuer;
     private int accessTokenMinutes = 10080;
     private int refreshTokenDays = 30;
     private int verificationCodeTtlMinutes = 10;
@@ -18,6 +19,7 @@ public class AppProperties {
     private String mailProvider = "console";
     private String googleClientId = "";
     private boolean logRequestBody = true;
+    private boolean enforceSubscription = false;
     private Bkash bkash = new Bkash();
 
     @Data

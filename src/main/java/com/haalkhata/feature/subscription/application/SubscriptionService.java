@@ -342,6 +342,23 @@ public class SubscriptionService {
     }
 
     @Transactional
+    public boolean hasActiveSubscription(String shopId) {
+        List<Subscription> existing = subscriptionRepository
+                .findByShopIdOrderByCreatedAtDesc(shopId);
+        if (existing.isEmpty()) {
+            grantTrial(shopId);
+            existing = subscriptionRepository
+                    .findByShopIdOrderByCreatedAtDesc(shopId);
+        }
+        LocalDateTime now = LocalDateTime.now();
+        return existing.stream()
+                .filter(sub -> SUB_ACTIVE.equals(sub.getStatus()))
+                .filter(sub -> sub.getEndDate() == null || sub.getEndDate().isAfter(now))
+                .findFirst()
+                .isPresent();
+    }
+
+    @Transactional
     public Map<String, Object> status(CurrentUser user) {
         // Lazy first-contact trial: a brand-new shop that has never touched
         // the subscription system gets its free trial right here — no changes

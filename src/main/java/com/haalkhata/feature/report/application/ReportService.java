@@ -423,13 +423,16 @@ public class ReportService {
             }
             double subtotal = saleItemRepository.findBySaleId(s.getSaleId()).stream()
                     .mapToDouble(i -> i.getQty() * i.getUnitPrice()).sum();
-            double vatAmount = subtotal * s.getVatPercent() / 100.0;
+            // Mirrors SaleService: VAT is charged on the discount-adjusted
+            // taxable amount, so the ledger and this report never diverge.
+            double taxable = Math.max(0, subtotal - s.getDiscount());
+            double vatAmount = taxable * s.getVatPercent() / 100.0;
             totalVat += vatAmount;
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("date", dateStr(s.getCreatedAt()));
             row.put("invoice", s.getSaleId());
             row.put("customer", s.getCustomerId());
-            row.put("subtotal", money(subtotal));
+            row.put("subtotal", money(taxable));
             row.put("vat", money(s.getVatPercent()));
             row.put("vatAmount", money(vatAmount));
             rows.add(row);

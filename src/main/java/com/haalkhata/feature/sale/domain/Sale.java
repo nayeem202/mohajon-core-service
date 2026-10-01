@@ -51,6 +51,12 @@ public class Sale {
     @Column(name = "payment_status", nullable = false, length = 10)
     private String paymentStatus;
 
+    @Column(name = "payment_method", nullable = false, length = 20)
+    private String paymentMethod;
+
+    @Column(name = "staff_id", length = 36)
+    private String staffId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

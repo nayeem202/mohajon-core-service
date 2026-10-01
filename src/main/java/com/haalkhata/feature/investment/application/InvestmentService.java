@@ -311,6 +311,7 @@ public class InvestmentService {
 
         List<InvestmentMember> members = memberRepository.findByInvestmentIdOrderByCreatedAtAsc(investmentId);
         for (InvestmentMember member : members) {
+            double previousProfit = member.getProfit();
             double profitShare = "fixed".equals(investment.getProfitShareMethod())
                     ? investment.getTotalProfit() / members.size()
                     : investment.getTotalProfit() * member.getSharePercentage() / 100;
@@ -319,12 +320,16 @@ public class InvestmentService {
             member.setUpdatedAt(LocalDateTime.now());
             memberRepository.save(member);
 
-            investorRepository.findByInvestorIdAndShopId(member.getInvestorId(), user.getShopId())
-                    .ifPresent(investor -> {
-                        investor.setTotalProfit(investor.getTotalProfit() + profitShare);
-                        investor.setUpdatedAt(LocalDateTime.now());
-                        investorRepository.save(investor);
-                    });
+            // Accumulate only the delta so re-running this update (idempotent
+            // retries, duplicate calls) never double-counts investor profit.
+            Investor investor = investorRepository
+                    .findByInvestorIdAndShopId(member.getInvestorId(), user.getShopId())
+                    .orElse(null);
+            if (investor != null) {
+                investor.setTotalProfit(investor.getTotalProfit() - previousProfit + profitShare);
+                investor.setUpdatedAt(LocalDateTime.now());
+                investorRepository.save(investor);
+            }
         }
         log.info("INVESTMENT_PROFIT_UPDATED investmentId={} roi={} totalProfit={}",
                 investmentId, request.roi(), investment.getTotalProfit());

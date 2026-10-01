@@ -12,7 +12,7 @@ public interface VendorRepository extends JpaRepository<Vendor, String> {
 
     Optional<Vendor> findByVendorIdAndShopIdAndIsDeletedFalse(String vendorId, String shopId);
 
-    List<Vendor> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
+    List<Vendor> findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Vendor> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

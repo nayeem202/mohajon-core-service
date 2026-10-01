@@ -39,8 +39,11 @@ management:
         include: health,info,metrics
 
 app:
+  # CRITICAL: override JWT_SECRET / TRUSTED_JWT_SECRET in production with
+  # unique, non-default values. The defaults below are dev-only.
   jwt-secret: ${JWT_SECRET:haalkhata-dev-secret-change-me-in-production-0123456789abcdef}
   trusted-jwt-secret: ${TRUSTED_JWT_SECRET:dev-only-secret-change-me-in-production-0123456789}
+  jwt-issuer: ${JWT_ISSUER:haalkhata-service}
   access-token-minutes: ${ACCESS_TOKEN_MINUTES:10080}
   refresh-token-days: ${REFRESH_TOKEN_DAYS:30}
   verification-code-ttl-minutes: ${VERIFICATION_CODE_TTL_MINUTES:10}
@@ -52,8 +55,15 @@ app:
   firebase-service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
   firebase-service-account-file: ${FIREBASE_SERVICE_ACCOUNT_FILE:}
   gemini-api-key: ${GEMINI_API_KEY:}
-  gemini-model: ${GEMINI_MODEL:gemini-2.5-flash}
+  gemini-model: ${GEMINI_MODEL:gemini-3.6-flash}
+  orca-api-key: ${ORCA_API_KEY:}
+  orca-model: ${ORCA_MODEL:deepseek/deepseek-v4-flash-free}
+  groq-api-key: ${GROQ_API_KEY:}
+  groq-model: ${GROQ_MODEL:qwen/qwen3.8-27b}
+  groq-stt-model: ${GROQ_STT_MODEL:whisper-large-v3-turbo}
   log-request-body: ${LOG_REQUEST_BODY:true}
+  # When true, sales/reports require an active subscription for the shop.
+  enforce-subscription: ${SUBSCRIPTION_ENFORCEMENT:false}
   bkash:
     base-url: ${BKASH_BASE_URL:https://tokenized.sandbox.bka.sh/v1.2.0-beta}
     app-key: ${BKASH_APP_KEY:4f6o0cjiki2rfm34kfdadl1eqq}

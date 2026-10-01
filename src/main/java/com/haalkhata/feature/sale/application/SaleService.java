@@ -1,11 +1,13 @@
 package com.haalkhata.feature.sale.application;
 
+import com.haalkhata.core.config.AppProperties;
 import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
 import com.haalkhata.core.util.MoneyUtil;
 import com.haalkhata.feature.customer.domain.Customer;
 import com.haalkhata.feature.customer.infrastructure.CustomerRepository;
+import com.haalkhata.feature.guardian.application.GuardianService;
 import com.haalkhata.feature.payment.domain.Payment;
 import com.haalkhata.feature.payment.infrastructure.PaymentMethodRepository;
 import com.haalkhata.feature.payment.infrastructure.PaymentRepository;
@@ -15,6 +17,7 @@ import com.haalkhata.feature.sale.domain.Sale;
 import com.haalkhata.feature.sale.domain.SaleItem;
 import com.haalkhata.feature.sale.infrastructure.SaleItemRepository;
 import com.haalkhata.feature.sale.infrastructure.SaleRepository;
+import com.haalkhata.feature.subscription.application.SubscriptionService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -39,6 +42,9 @@ public class SaleService {
     private final CustomerRepository customerRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final SubscriptionService subscriptionService;
+    private final AppProperties props;
+    private final GuardianService guardianService;
 
     public record SaleItemRequest(String productId, String name, double qty, double unitPrice, Double purchasePrice) {
     }
@@ -67,6 +73,7 @@ public class SaleService {
 
     @Transactional
     public Map<String, Object> create(CurrentUser user, CreateSaleRequest request) {
+        requireActiveSubscription(user);
         // Idempotent retry: a duplicate POST with an existing saleId returns
         // the already-created sale instead of decrementing stock twice.
         if (request.saleId() != null && !request.saleId().isBlank()) {
@@ -141,6 +148,9 @@ public class SaleService {
                 .paidAmount(paid)
                 .dueAmount(due)
                 .paymentStatus(status)
+                .paymentMethod(request.paymentMethod() == null || request.paymentMethod().isBlank()
+                        ? "CASH" : request.paymentMethod().toUpperCase())
+                .staffId(user.getUserId())
                 .createdAt(now)
                 .updatedAt(now)
                 .isDeleted(false)
@@ -181,6 +191,8 @@ public class SaleService {
 
         log.info("SALE_CREATED saleId={} shopId={} customer={} total={} paid={} due={} status={}",
                 sale.getSaleId(), user.getShopId(), customer.getName(), total, paid, due, status);
+        guardianService.record(user, "SALE_CREATED", "SALE", sale.getSaleId(), total,
+                Map.of("discount", discount, "paid", paid, "due", due, "itemCount", items.size()));
         return toJson(sale);
     }
 
@@ -188,10 +200,45 @@ public class SaleService {
     public void delete(CurrentUser user, String saleId) {
         Sale sale = saleRepository.findBySaleIdAndShopIdAndIsDeletedFalse(saleId, user.getShopId())
                 .orElseThrow(() -> BusinessException.notFound("Sale not found"));
+        LocalDateTime now = LocalDateTime.now();
+
+        // Restore stock to the shelves for every sold item.
+        for (SaleItem item : saleItemRepository.findBySaleId(saleId)) {
+            if (item.getProductId() != null && !item.getProductId().isBlank()) {
+                productRepository.incrementStock(item.getProductId(), user.getShopId(),
+                        (int) Math.round(item.getQty()), now);
+            }
+        }
+
+        // Reverse the sale's effect on customer totals and mark any payments
+        // recorded against it deleted so the ledger stays consistent.
+        customerRepository.findByCustomerIdAndShopIdAndIsDeletedFalse(sale.getCustomerId(), user.getShopId())
+                .ifPresent(customer -> {
+                    customer.setTotalSpent(MoneyUtil.round2(customer.getTotalSpent() - sale.getTotalAmount()));
+                    customer.setUpdatedAt(now);
+                    customerRepository.save(customer);
+                });
+        for (Payment payment : paymentRepository
+                .findBySaleIdAndShopIdAndIsDeletedFalse(sale.getSaleId(), user.getShopId())) {
+            payment.setDeleted(true);
+            payment.setUpdatedAt(now);
+            paymentRepository.save(payment);
+        }
+
         sale.setDeleted(true);
-        sale.setUpdatedAt(LocalDateTime.now());
+        sale.setUpdatedAt(now);
         saleRepository.save(sale);
         log.info("SALE_DELETED saleId={} shopId={}", saleId, user.getShopId());
+        guardianService.record(user, "DELETE", "SALE", saleId, sale.getTotalAmount(), Map.of("reason", "manual_delete"));
+    }
+
+    private void requireActiveSubscription(CurrentUser user) {
+        if (props.isEnforceSubscription()
+                && !subscriptionService.hasActiveSubscription(user.getShopId())) {
+            throw new BusinessException("SUBSCRIPTION_REQUIRED",
+                    "An active subscription is required to record sales",
+                    org.springframework.http.HttpStatus.FORBIDDEN);
+        }
     }
 
     public Map<String, Object> toJson(Sale s) {
@@ -216,6 +263,8 @@ public class SaleService {
         json.put("paidAmount", s.getPaidAmount());
         json.put("dueAmount", s.getDueAmount());
         json.put("paymentStatus", s.getPaymentStatus());
+        json.put("paymentMethod", s.getPaymentMethod());
+        json.put("staffId", s.getStaffId());
         json.put("shopId", s.getShopId());
         json.put("createdAt", s.getCreatedAt().format(ISO));
         json.put("updatedAt", s.getUpdatedAt().format(ISO));

@@ -109,6 +109,7 @@ public class UserService {
 
     @Transactional
     public Map<String, Object> invite(CurrentUser owner, InviteRequest request) {
+        requireRole(owner, "OWNER", "ADMIN");
         if (request.name() == null || request.name().isBlank()) {
             throw BusinessException.badRequest("Name is required");
         }
@@ -128,6 +129,10 @@ public class UserService {
         String roleCode = request.role() == null || request.role().isBlank() ? "STAFF" : request.role().toUpperCase();
         if (roleRepository.findByCode(roleCode).isEmpty()) {
             throw BusinessException.badRequest("Unknown role: " + roleCode);
+        }
+        // Only the true shop owner may hand out OWNER (or ADMIN) powers.
+        if (("OWNER".equals(roleCode) || "ADMIN".equals(roleCode)) && !isOwner(owner)) {
+            throw BusinessException.forbidden("Only the shop owner can assign the " + roleCode + " role");
         }
         String userId = Ids.uuid();
         AppUser staff = AppUser.builder()
@@ -160,6 +165,7 @@ public class UserService {
 
     @Transactional
     public Map<String, Object> update(CurrentUser owner, String userId, UpdateRequest request) {
+        requireRole(owner, "OWNER", "ADMIN");
         AppUser staff = userRepository.findById(userId)
                 .filter(u -> u.getShopId() != null && u.getShopId().equals(owner.getShopId()))
                 .orElseThrow(() -> BusinessException.notFound("Staff member not found"));
@@ -174,12 +180,26 @@ public class UserService {
             if (roleRepository.findByCode(roleCode).isEmpty()) {
                 throw BusinessException.badRequest("Unknown role: " + roleCode);
             }
+            // OWNER can be neither demoted by a non-owner nor promoted-to
+            // without being the owner. Admins manage staff, not owners.
+            if (isTrueOwnerStaff(staff.getId())) {
+                if (!isOwner(owner) || staff.getId().equals(owner.getUserId())) {
+                    throw BusinessException.forbidden("The shop owner role cannot be changed");
+                }
+            }
+            if (("OWNER".equals(roleCode) || "ADMIN".equals(roleCode)) && !isOwner(owner)) {
+                throw BusinessException.forbidden("Only the shop owner can assign the " + roleCode + " role");
+            }
             staff.setRole(roleCode);
         }
         if (request.photoUrl() != null) {
             staff.setPhotoUrl(request.photoUrl().isBlank() ? null : request.photoUrl().trim());
         }
         if (request.active() != null) {
+            // Deactivate/reactivate someone with OWNER powers only via the owner.
+            if (!request.active() && isTrueOwnerStaff(staff.getId()) && !isOwner(owner)) {
+                throw BusinessException.forbidden("Only the shop owner can deactivate the owner");
+            }
             staff.setStatus(request.active() ? "ACTIVE" : "INACTIVE");
         }
         if (request.menuCodes() != null && request.menuCodes().isEmpty()) {
@@ -198,11 +218,16 @@ public class UserService {
 
     @Transactional
     public void remove(CurrentUser owner, String userId) {
+        requireRole(owner, "OWNER", "ADMIN");
         AppUser staff = userRepository.findById(userId)
                 .filter(u -> u.getShopId() != null && u.getShopId().equals(owner.getShopId()))
                 .orElseThrow(() -> BusinessException.notFound("Staff member not found"));
         if (staff.getId().equals(owner.getUserId())) {
             throw BusinessException.badRequest("You cannot remove yourself");
+        }
+        // Only the true owner may remove a member with OWNER/ADMIN powers.
+        if (isTrueOwnerStaff(staff.getId()) && !isOwner(owner)) {
+            throw BusinessException.forbidden("Only the shop owner can remove the owner");
         }
         userRoleRepository.deleteByUserId(staff.getId());
         userMenuRepository.deleteByUserId(staff.getId());
@@ -274,6 +299,39 @@ public class UserService {
         } catch (Exception ex) {
             log.warn("AUTH_USER_DELETE_FAILED externalId={}: {}", externalId, ex.getMessage());
         }
+    }
+
+    // -----------------------------------------------------------------
+    // Access control — resolves the actor's true role from the DB so a
+    // stale or forged JWT can never grant staff-management powers.
+    // -----------------------------------------------------------------
+
+    private AppUser requireRole(CurrentUser currentUser, String... allowed) {
+        AppUser actor = userRepository.findById(currentUser.getUserId()).orElse(null);
+        if (actor == null || !"ACTIVE".equals(actor.getStatus())) {
+            throw BusinessException.forbidden("Access denied");
+        }
+        String role = actor.getRole() == null ? "" : actor.getRole().toUpperCase();
+        for (String allowedRole : allowed) {
+            if (allowedRole.equals(role)) {
+                return actor;
+            }
+        }
+        throw BusinessException.forbidden("Only the shop owner can manage staff");
+    }
+
+    private boolean isOwner(CurrentUser currentUser) {
+        return userRepository.findById(currentUser.getUserId())
+                .map(AppUser::getRole)
+                .map(role -> "OWNER".equals(role.toUpperCase()))
+                .orElse(false);
+    }
+
+    private boolean isTrueOwnerStaff(String userId) {
+        return userRepository.findById(userId)
+                .map(AppUser::getRole)
+                .map(role -> "OWNER".equals(role.toUpperCase()))
+                .orElse(false);
     }
 
     private void saveMenuGrants(String userId, List<String> menuCodes) {

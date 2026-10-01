@@ -12,7 +12,7 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
 
     Optional<Customer> findByCustomerIdAndShopIdAndIsDeletedFalse(String customerId, String shopId);
 
-    List<Customer> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
+    List<Customer> findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Customer> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 

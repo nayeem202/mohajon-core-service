@@ -127,7 +127,7 @@ public class SyncService {
         List<Map<String, Object>> docs = switch (collection) {
             case "products" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                productRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                productRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(productJson(p)));
                 productRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(productJson(p)));
@@ -135,7 +135,7 @@ public class SyncService {
             }
             case "customers" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                customerRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                customerRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(c -> d.add(customerJson(c)));
                 customerRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(c -> d.add(customerJson(c)));
@@ -143,7 +143,7 @@ public class SyncService {
             }
             case "sales" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                saleRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                saleRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(s -> d.add(saleJson(s)));
                 saleRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(s -> d.add(saleJson(s)));
@@ -151,7 +151,7 @@ public class SyncService {
             }
             case "customerLedgerEntries" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                ledgerRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                ledgerRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(e -> d.add(ledgerJson(e)));
                 ledgerRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(e -> d.add(ledgerJson(e)));
@@ -159,7 +159,7 @@ public class SyncService {
             }
             case "payments" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                paymentRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                paymentRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(paymentJson(p)));
                 paymentRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(paymentJson(p)));
@@ -167,7 +167,7 @@ public class SyncService {
             }
             case "purchases" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                purchaseRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                purchaseRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(purchaseJson(p)));
                 purchaseRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(purchaseJson(p)));
@@ -175,7 +175,7 @@ public class SyncService {
             }
             case "suppliers" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                supplierRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                supplierRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(s -> d.add(supplierJson(s)));
                 supplierRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(s -> d.add(supplierJson(s)));
@@ -183,7 +183,7 @@ public class SyncService {
             }
             case "vendors" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                vendorRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                vendorRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(v -> d.add(vendorJson(v)));
                 vendorRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(v -> d.add(vendorJson(v)));
@@ -191,7 +191,7 @@ public class SyncService {
             }
             case "vendorPurchases" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                vendorPurchaseRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                vendorPurchaseRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPurchaseJson(p)));
                 vendorPurchaseRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPurchaseJson(p)));
@@ -199,7 +199,7 @@ public class SyncService {
             }
             case "vendorPayments" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                vendorPaymentRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                vendorPaymentRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPaymentJson(p)));
                 vendorPaymentRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(p -> d.add(vendorPaymentJson(p)));
@@ -207,7 +207,7 @@ public class SyncService {
             }
             case "expenses" -> {
                 List<Map<String, Object>> d = new ArrayList<>();
-                expenseRepository.findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
+                expenseRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(user.getShopId(), after)
                         .forEach(e -> d.add(expenseJson(e)));
                 expenseRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(user.getShopId(), after)
                         .forEach(e -> d.add(expenseJson(e)));
@@ -302,6 +302,8 @@ public class SyncService {
         sale.setPaidAmount(dbl(doc, "paidAmount"));
         sale.setDueAmount(dbl(doc, "dueAmount"));
         sale.setPaymentStatus(str(doc, "paymentStatus"));
+        sale.setPaymentMethod(str(doc, "paymentMethod"));
+        sale.setStaffId(nul(doc, "staffId"));
         sale.setCreatedAt(time(doc, "createdAt"));
         sale.setDeleted(bool(doc, "isDeleted"));
         sale.setUpdatedAt(time(doc, "updatedAt"));
@@ -591,6 +593,8 @@ public class SyncService {
         json.put("paidAmount", s.getPaidAmount());
         json.put("dueAmount", s.getDueAmount());
         json.put("paymentStatus", s.getPaymentStatus());
+        json.put("paymentMethod", s.getPaymentMethod());
+        json.put("staffId", s.getStaffId());
         json.put("shopId", s.getShopId());
         json.put("createdAt", s.getCreatedAt().format(ISO));
         json.put("updatedAt", s.getUpdatedAt().format(ISO));

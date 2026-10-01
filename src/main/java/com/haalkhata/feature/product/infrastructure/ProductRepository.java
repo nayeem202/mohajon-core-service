@@ -29,7 +29,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             "WHERE p.productId = :productId AND p.shopId = :shopId AND p.isDeleted = false")
     int incrementStock(String productId, String shopId, int qty, LocalDateTime now);
 
-    List<Product> findByShopIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
+    List<Product> findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Product> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
 
