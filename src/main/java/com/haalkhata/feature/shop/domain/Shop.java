@@ -36,6 +36,12 @@ public class Shop {
     @Column(name = "phone_number", length = 30)
     private String phoneNumber;
 
+    @Column(length = 50)
+    private String tin;
+
+    @Column(length = 50)
+    private String bin;
+
     @Column(name = "image_path", length = 500)
     private String imagePath;
 
@@ -44,6 +50,17 @@ public class Shop {
 
     @Column(name = "total_investment", nullable = false)
     private double totalInvestment;
+
+    @Column(name = "loyalty_offer_enabled", nullable = false)
+    private boolean loyaltyOfferEnabled;
+    @Column(name = "loyalty_offer_points", nullable = false)
+    private int loyaltyOfferPoints;
+    @Column(name = "loyalty_offer_percent", nullable = false)
+    private double loyaltyOfferPercent;
+    @Column(name = "loyalty_offer_max_discount", nullable = false)
+    private double loyaltyOfferMaxDiscount;
+    @Column(name = "loyalty_offer_minimum_purchase", nullable = false)
+    private double loyaltyOfferMinimumPurchase;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

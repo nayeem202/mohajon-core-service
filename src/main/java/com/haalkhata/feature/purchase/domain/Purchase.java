@@ -27,6 +27,12 @@ public class Purchase {
     @Column(name = "shop_id", nullable = false, length = 60)
     private String shopId;
 
+    @Column(name = "branch_id", nullable = false, length = 80)
+    private String branchId;
+
+    @Column(name = "staff_id", length = 36)
+    private String staffId;
+
     @Column(name = "supplier_id", nullable = false, length = 36)
     private String supplierId;
 

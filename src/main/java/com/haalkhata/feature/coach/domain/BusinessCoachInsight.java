@@ -20,6 +20,8 @@ public class BusinessCoachInsight {
     private String insightId;
     @Column(name = "shop_id", nullable = false, length = 60)
     private String shopId;
+    @Column(name = "branch_id", nullable = false, length = 80)
+    private String branchId;
     @Column(name = "insight_date", nullable = false)
     private LocalDate insightDate;
     @Column(nullable = false, length = 30)

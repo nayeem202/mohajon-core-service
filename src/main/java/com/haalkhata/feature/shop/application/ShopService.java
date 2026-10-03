@@ -33,6 +33,10 @@ import com.haalkhata.feature.shop.infrastructure.ShopRepository;
 import com.haalkhata.feature.vendor.infrastructure.VendorPaymentRepository;
 import com.haalkhata.feature.vendor.infrastructure.VendorPurchaseRepository;
 import com.haalkhata.feature.vendor.infrastructure.VendorRepository;
+import com.haalkhata.feature.branch.domain.Branch;
+import com.haalkhata.feature.branch.domain.BranchMember;
+import com.haalkhata.feature.branch.infrastructure.BranchMemberRepository;
+import com.haalkhata.feature.branch.infrastructure.BranchRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,12 +80,50 @@ public class ShopService {
     private final BusinessCoachInsightRepository businessCoachInsightRepository;
     private final GuardianAuditEventRepository guardianAuditEventRepository;
     private final DailyCashClosingRepository dailyCashClosingRepository;
+    private final BranchRepository branchRepository;
+    private final BranchMemberRepository branchMemberRepository;
 
     public record UpdateShopRequest(String name, String location, String phoneNumber, String imagePath,
-                                    List<OwnerDto> owners) {
+                                    List<OwnerDto> owners, String tin, String bin) {
     }
 
     public record OwnerDto(String ownerId, String name, Double investmentAmount) {
+    }
+
+    public record LoyaltyOfferRequest(Boolean enabled, Integer pointsRequired,
+                                      Double discountPercent, Double maxDiscount,
+                                      Double minimumPurchase) {
+    }
+
+    @Transactional
+    public Map<String, Object> updateLoyaltyOffer(CurrentUser user, LoyaltyOfferRequest request) {
+        if (user.getRole() == null || !(user.getRole().equalsIgnoreCase("OWNER")
+                || user.getRole().equalsIgnoreCase("ADMIN"))) {
+            throw new com.haalkhata.core.exception.BusinessException("FORBIDDEN", "Owner access required",
+                    org.springframework.http.HttpStatus.FORBIDDEN);
+        }
+        Shop shop = shopRepository.findById(user.getShopId())
+                .orElseThrow(() -> com.haalkhata.core.exception.BusinessException.notFound("Shop not found"));
+        if (request == null) throw com.haalkhata.core.exception.BusinessException.badRequest("Offer settings are required");
+        if (request.enabled() != null) shop.setLoyaltyOfferEnabled(request.enabled());
+        if (request.pointsRequired() != null) {
+            if (request.pointsRequired() <= 0) throw com.haalkhata.core.exception.BusinessException.badRequest("Points must be positive");
+            shop.setLoyaltyOfferPoints(request.pointsRequired());
+        }
+        if (request.discountPercent() != null) {
+            if (request.discountPercent() < 0 || request.discountPercent() > 100) throw com.haalkhata.core.exception.BusinessException.badRequest("Discount must be between 0 and 100");
+            shop.setLoyaltyOfferPercent(request.discountPercent());
+        }
+        if (request.maxDiscount() != null) {
+            if (request.maxDiscount() < 0) throw com.haalkhata.core.exception.BusinessException.badRequest("Maximum discount cannot be negative");
+            shop.setLoyaltyOfferMaxDiscount(request.maxDiscount());
+        }
+        if (request.minimumPurchase() != null) {
+            if (request.minimumPurchase() < 0) throw com.haalkhata.core.exception.BusinessException.badRequest("Minimum purchase cannot be negative");
+            shop.setLoyaltyOfferMinimumPurchase(request.minimumPurchase());
+        }
+        shop.setUpdatedAt(LocalDateTime.now());
+        return toJson(shopRepository.save(shop));
     }
 
     @Transactional
@@ -93,6 +135,11 @@ public class ShopService {
                     .name(user.getName() == null ? "My Shop" : user.getName() + "'s Shop")
                     .ownerCount(1)
                     .totalInvestment(0)
+                    .loyaltyOfferEnabled(true)
+                    .loyaltyOfferPoints(100)
+                    .loyaltyOfferPercent(5)
+                    .loyaltyOfferMaxDiscount(100)
+                    .loyaltyOfferMinimumPurchase(0)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .build();
@@ -107,6 +154,7 @@ public class ShopService {
             log.info("SHOP_CREATED shopId={} owner={}", fresh.getShopId(), user.getUserId());
             return fresh;
         });
+        ensureMainBranch(shop, user);
         return toJson(shop);
     }
 
@@ -127,6 +175,11 @@ public class ShopService {
                     .name(user.getName() == null ? "My Shop" : user.getName() + "'s Shop")
                     .ownerCount(1)
                     .totalInvestment(0)
+                    .loyaltyOfferEnabled(true)
+                    .loyaltyOfferPoints(100)
+                    .loyaltyOfferPercent(5)
+                    .loyaltyOfferMaxDiscount(100)
+                    .loyaltyOfferMinimumPurchase(0)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .build();
@@ -141,6 +194,7 @@ public class ShopService {
             log.info("SHOP_CREATED_FROM_UPDATE shopId={} owner={}", fresh.getShopId(), user.getUserId());
             return fresh;
         });
+        ensureMainBranch(shop, user);
         if (request.name() != null && !request.name().isBlank()) {
             shop.setName(request.name().trim());
         }
@@ -152,6 +206,12 @@ public class ShopService {
         }
         if (request.imagePath() != null) {
             shop.setImagePath(request.imagePath().isBlank() ? null : request.imagePath().trim());
+        }
+        if (request.tin() != null) {
+            shop.setTin(request.tin().isBlank() ? null : request.tin().trim());
+        }
+        if (request.bin() != null) {
+            shop.setBin(request.bin().isBlank() ? null : request.bin().trim());
         }
         if (request.owners() != null) {
             double total = 0;
@@ -175,6 +235,18 @@ public class ShopService {
         shopRepository.save(shop);
         log.info("SHOP_UPDATED shopId={} by={}", shop.getShopId(), user.getUserId());
         return toJson(shop);
+    }
+
+    private void ensureMainBranch(Shop shop, CurrentUser user) {
+        String branchId = shop.getShopId() + "-main";
+        Branch branch = branchRepository.findById(branchId).orElseGet(() -> branchRepository.save(
+                Branch.builder().branchId(branchId).shopId(shop.getShopId()).name("Main Branch")
+                        .isDefault(true).isActive(true).createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now()).build()));
+        if (branchMemberRepository.findByBranchIdAndUserId(branch.getBranchId(), user.getUserId()).isEmpty()) {
+            branchMemberRepository.save(BranchMember.builder().membershipId(Ids.uuid())
+                    .branchId(branch.getBranchId()).userId(user.getUserId()).build());
+        }
     }
 
     @Transactional
@@ -230,12 +302,19 @@ public class ShopService {
         json.put("name", shop.getName());
         json.put("location", shop.getLocation() == null ? "" : shop.getLocation());
         json.put("phoneNumber", shop.getPhoneNumber() == null ? "" : shop.getPhoneNumber());
+        json.put("tin", shop.getTin() == null ? "" : shop.getTin());
+        json.put("bin", shop.getBin() == null ? "" : shop.getBin());
         json.put("imagePath", shop.getImagePath() == null ? "" : shop.getImagePath());
         json.put("owners", owners);
         json.put("ownerCount", shop.getOwnerCount());
         json.put("totalInvestment", shop.getTotalInvestment());
         json.put("createdAt", shop.getCreatedAt().toString());
         json.put("updatedAt", shop.getUpdatedAt().toString());
+        json.put("loyaltyOfferEnabled", shop.isLoyaltyOfferEnabled());
+        json.put("loyaltyOfferPoints", shop.getLoyaltyOfferPoints());
+        json.put("loyaltyOfferPercent", shop.getLoyaltyOfferPercent());
+        json.put("loyaltyOfferMaxDiscount", shop.getLoyaltyOfferMaxDiscount());
+        json.put("loyaltyOfferMinimumPurchase", shop.getLoyaltyOfferMinimumPurchase());
         return json;
     }
 }

@@ -2,6 +2,8 @@ package com.haalkhata.core.security;
 
 import com.haalkhata.feature.auth.domain.AppUser;
 import com.haalkhata.feature.auth.infrastructure.AppUserRepository;
+import com.haalkhata.feature.branch.infrastructure.BranchMemberRepository;
+import com.haalkhata.feature.branch.infrastructure.BranchRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -26,6 +28,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AppUserRepository userRepository;
+    private final BranchRepository branchRepository;
+    private final BranchMemberRepository branchMemberRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -80,7 +84,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 if (role == null) {
                     role = "OWNER";
                 }
-                CurrentUser user = new CurrentUser(userId, email, name, shopId, role, roles);
+                String branchId = request.getHeader("X-Branch-Id");
+                if (branchId == null || branchId.isBlank()) {
+                    branchId = shopId + "-main";
+                }
+                var branch = branchRepository.findByBranchIdAndShopId(branchId, shopId).orElse(null);
+                boolean ownerOrAdmin = "OWNER".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
+                boolean member = branch != null && branchMemberRepository
+                        .findByBranchIdAndUserId(branchId, userId).isPresent();
+                boolean implicitMainBranch = branch == null && branchId.equals(shopId + "-main");
+                if ((!implicitMainBranch && (branch == null || !branch.isActive()))
+                        || (!implicitMainBranch && !ownerOrAdmin && !member)) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid branch context");
+                    return;
+                }
+                CurrentUser user = new CurrentUser(userId, email, name, shopId, role, roles, branchId);
                 request.setAttribute("currentUser", user);
                 var authorities = (roles == null ? List.of(role) : roles)
                         .stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r)).toList();

@@ -20,6 +20,7 @@ public class AppProperties {
     private String googleClientId = "";
     private boolean logRequestBody = true;
     private boolean enforceSubscription = false;
+    private String publicBaseUrl = "";
     private Bkash bkash = new Bkash();
 
     @Data

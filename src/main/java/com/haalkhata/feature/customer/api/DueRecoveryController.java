@@ -4,11 +4,13 @@ import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.feature.customer.application.DueRecoveryService;
 import com.haalkhata.feature.customer.application.DueRecoveryService.FollowUpRequest;
 import com.haalkhata.feature.customer.application.DueRecoveryService.PlanRequest;
+import com.haalkhata.feature.customer.application.DueRecoveryService.StatusRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -41,5 +43,13 @@ public class DueRecoveryController {
                                         @PathVariable String customerId,
                                         @Valid @RequestBody FollowUpRequest request) {
         return dueRecoveryService.addFollowUp(user, customerId, request);
+    }
+
+    @PatchMapping("/follow-ups/{followUpId}/status")
+    public Map<String, Object> updateStatus(@AuthenticationPrincipal CurrentUser user,
+                                             @PathVariable String customerId,
+                                             @PathVariable String followUpId,
+                                             @RequestBody StatusRequest request) {
+        return dueRecoveryService.updateStatus(user, customerId, followUpId, request);
     }
 }

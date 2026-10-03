@@ -4,6 +4,7 @@ import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.feature.customer.application.CustomerService;
 import com.haalkhata.feature.customer.application.CustomerService.LedgerRequest;
 import com.haalkhata.feature.customer.application.CustomerService.UpsertRequest;
+import com.haalkhata.feature.customer.application.CustomerService.MergeRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,12 @@ public class CustomerController {
         return customerService.upsert(user, request);
     }
 
+    @PostMapping("/merge")
+    public Map<String, Object> merge(@AuthenticationPrincipal CurrentUser user,
+                                     @Valid @RequestBody MergeRequest request) {
+        return customerService.merge(user, request);
+    }
+
     @PutMapping("/{customerId}")
     public Map<String, Object> update(@AuthenticationPrincipal CurrentUser user,
                                       @PathVariable String customerId,
@@ -69,6 +76,6 @@ public class CustomerController {
     private UpsertRequest withId(UpsertRequest request, String customerId) {
         return new UpsertRequest(customerId, request.name(), request.phone(), request.email(),
                 request.address(), request.notes(), request.imagePath(), request.totalSpent(),
-                request.tag(), request.isDeleted());
+                request.tag(), request.creditLimit(), request.isDeleted());
     }
 }

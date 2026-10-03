@@ -24,6 +24,6 @@ public class BusinessCoachController {
 
     @PostMapping("/refresh")
     public List<Map<String, Object>> refresh(@AuthenticationPrincipal CurrentUser user) {
-        return service.refresh(user.getShopId(), user.getUserId());
+        return service.refresh(user.getShopId(), user.getUserId(), user.getBranchId());
     }
 }

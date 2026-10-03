@@ -25,6 +25,7 @@ public class ProductService {
     private final GuardianService guardianService;
 
     public record UpsertRequest(String productId, String nameEn, String nameBn, String barcode,
+                                String sku, String variantName, String batchNumber,
                                 String category, String unit, String imagePath,
                                 Double buyingPrice, Double purchasePrice, Double sellingPrice,
                                 Integer stockQty, Integer lowStockAlert, LocalDate expiryDate,
@@ -35,12 +36,12 @@ public class ProductService {
     }
 
     public List<Map<String, Object>> list(CurrentUser user) {
-        return productRepository.findByShopIdAndIsDeletedFalseOrderByNameEnAsc(user.getShopId())
+        return productRepository.findByShopIdAndBranchIdAndIsDeletedFalseOrderByNameEnAsc(user.getShopId(), user.getBranchId())
                 .stream().map(this::toJson).toList();
     }
 
     public Map<String, Object> get(CurrentUser user, String productId) {
-        return productRepository.findByProductIdAndShopIdAndIsDeletedFalse(productId, user.getShopId())
+        return productRepository.findByProductIdAndShopIdAndBranchIdAndIsDeletedFalse(productId, user.getShopId(), user.getBranchId())
                 .map(this::toJson)
                 .orElseThrow(() -> BusinessException.notFound("Product not found"));
     }
@@ -48,7 +49,7 @@ public class ProductService {
     public List<Map<String, Object>> lowStock(CurrentUser user) {
         // Per-product threshold, falling back to a default of 10 units when a
         // product has not configured its own low-stock alert.
-        return productRepository.findByShopIdAndIsDeletedFalseOrderByNameEnAsc(user.getShopId())
+        return productRepository.findByShopIdAndBranchIdAndIsDeletedFalseOrderByNameEnAsc(user.getShopId(), user.getBranchId())
                 .stream()
                 .filter(p -> {
                     int threshold = p.getLowStockAlert() > 0 ? p.getLowStockAlert() : 10;
@@ -60,12 +61,25 @@ public class ProductService {
 
     @Transactional
     public Map<String, Object> upsert(CurrentUser user, UpsertRequest request) {
+        if (request == null || request.nameEn() == null || request.nameEn().isBlank()) {
+            throw BusinessException.badRequest("Product name is required");
+        }
+        validateAmount(request.buyingPrice(), "Buying price");
+        validateAmount(request.purchasePrice(), "Purchase price");
+        validateAmount(request.sellingPrice(), "Selling price");
+        if (request.stockQty() != null && request.stockQty() < 0) {
+            throw BusinessException.badRequest("Stock quantity cannot be negative");
+        }
+        if (request.lowStockAlert() != null && request.lowStockAlert() < 0) {
+            throw BusinessException.badRequest("Low-stock alert cannot be negative");
+        }
         Product product;
         boolean isNew = request.productId() == null || request.productId().isBlank();
         if (isNew) {
             product = Product.builder()
                     .productId(Ids.uuid())
                     .shopId(user.getShopId())
+                    .branchId(user.getBranchId())
                     .buyingPrice(0)
                     .purchasePrice(0)
                     .sellingPrice(0)
@@ -80,10 +94,14 @@ public class ProductService {
             if (!product.getShopId().equals(user.getShopId())) {
                 throw BusinessException.forbidden("You do not own this product");
             }
+            if (!user.getBranchId().equals(product.getBranchId())) throw BusinessException.forbidden("You do not own this branch product");
         }
         product.setNameEn(request.nameEn() == null ? product.getNameEn() : request.nameEn().trim());
         product.setNameBn(request.nameBn());
         product.setBarcode(request.barcode());
+        product.setSku(request.sku());
+        product.setVariantName(request.variantName());
+        product.setBatchNumber(request.batchNumber());
         product.setCategory(request.category());
         product.setUnit(request.unit());
         product.setImagePath(request.imagePath());
@@ -105,9 +123,15 @@ public class ProductService {
         return toJson(product);
     }
 
+    private void validateAmount(Double value, String label) {
+        if (value != null && (!Double.isFinite(value) || value < 0)) {
+            throw BusinessException.badRequest(label + " must be a valid non-negative amount");
+        }
+    }
+
     @Transactional
     public Map<String, Object> adjustStock(CurrentUser user, String productId, StockAdjustRequest request) {
-        Product product = productRepository.findByProductIdAndShopIdAndIsDeletedFalse(productId, user.getShopId())
+        Product product = productRepository.findByProductIdAndShopIdAndBranchIdAndIsDeletedFalse(productId, user.getShopId(), user.getBranchId())
                 .orElseThrow(() -> BusinessException.notFound("Product not found"));
         int newQty = product.getStockQty() + request.deltaQty();
         if (newQty < 0) {
@@ -124,7 +148,7 @@ public class ProductService {
 
     @Transactional
     public void delete(CurrentUser user, String productId) {
-        Product product = productRepository.findByProductIdAndShopIdAndIsDeletedFalse(productId, user.getShopId())
+        Product product = productRepository.findByProductIdAndShopIdAndBranchIdAndIsDeletedFalse(productId, user.getShopId(), user.getBranchId())
                 .orElseThrow(() -> BusinessException.notFound("Product not found"));
         product.setDeleted(true);
         product.setUpdatedAt(LocalDateTime.now());
@@ -139,6 +163,9 @@ public class ProductService {
         json.put("nameEn", p.getNameEn());
         json.put("nameBn", p.getNameBn());
         json.put("barcode", p.getBarcode());
+        json.put("sku", p.getSku());
+        json.put("variantName", p.getVariantName());
+        json.put("batchNumber", p.getBatchNumber());
         json.put("category", p.getCategory());
         json.put("unit", p.getUnit());
         json.put("imagePath", p.getImagePath());
@@ -149,6 +176,7 @@ public class ProductService {
         json.put("lowStockAlert", p.getLowStockAlert());
         json.put("expiryDate", p.getExpiryDate() == null ? null : p.getExpiryDate().toString());
         json.put("shopId", p.getShopId());
+        json.put("branchId", p.getBranchId());
         json.put("updatedAt", p.getUpdatedAt().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         json.put("isDeleted", p.isDeleted());
         return json;

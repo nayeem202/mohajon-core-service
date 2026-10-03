@@ -36,6 +36,21 @@ public class DueRecoveryFollowUp {
     @Column(length = 500)
     private String note;
 
+    @Column(nullable = false, length = 20)
+    private String status;
+
+    @Column(name = "status_changed_at")
+    private LocalDateTime statusChangedAt;
+
+    @Column(name = "failure_reason", length = 500)
+    private String failureReason;
+
+    @Column(name = "provider_message_id", length = 200)
+    private String providerMessageId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }

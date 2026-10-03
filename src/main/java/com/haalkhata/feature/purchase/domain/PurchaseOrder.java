@@ -26,6 +26,8 @@ public class PurchaseOrder {
 
     @Column(name = "shop_id", nullable = false, length = 60)
     private String shopId;
+    @Column(name = "branch_id", nullable = false, length = 80)
+    private String branchId;
 
     @Column(name = "supplier_id", length = 36)
     private String supplierId;
@@ -44,4 +46,10 @@ public class PurchaseOrder {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "received_qty_json", columnDefinition = "text")
+    private String receivedQtyJson;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted;
 }

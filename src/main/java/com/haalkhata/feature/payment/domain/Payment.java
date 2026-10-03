@@ -42,6 +42,12 @@ public class Payment {
     @Column(length = 200)
     private String reference;
 
+    @Column(name = "staff_id", length = 36)
+    private String staffId;
+
+    @Column(name = "branch_id", length = 80)
+    private String branchId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

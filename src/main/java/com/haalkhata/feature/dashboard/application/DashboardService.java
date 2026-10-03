@@ -37,9 +37,9 @@ public class DashboardService {
         LocalDateTime weekStart = today.with(DayOfWeek.MONDAY).atStartOfDay();
 
         Map<String, Object> json = new LinkedHashMap<>();
-        json.put("todaySales", saleRepository.sumTotal(shopId, dayStart, dayEnd));
-        json.put("todayPaid", saleRepository.sumPaid(shopId, dayStart, dayEnd));
-        json.put("weekSales", saleRepository.sumTotal(shopId, weekStart, dayEnd));
+        json.put("todaySales", saleRepository.sumTotalForBranch(shopId, user.getBranchId(), dayStart, dayEnd));
+        json.put("todayPaid", saleRepository.sumPaidForBranch(shopId, user.getBranchId(), dayStart, dayEnd));
+        json.put("weekSales", saleRepository.sumTotalForBranch(shopId, user.getBranchId(), weekStart, dayEnd));
         json.put("totalDue", totalDue(user));
         json.put("customerCount", customerRepository.findByShopIdAndIsDeletedFalseOrderByNameAsc(shopId).size());
         Long lowStockCount = productRepository
@@ -58,6 +58,7 @@ public class DashboardService {
 
     public double totalDue(CurrentUser user) {
         return saleRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId()).stream()
+                .filter(s -> user.getBranchId().equals(s.getBranchId()))
                 .mapToDouble(Sale::getDueAmount).sum();
     }
 
@@ -71,7 +72,7 @@ public class DashboardService {
             LocalDateTime to = day.plusDays(1).atStartOfDay();
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("date", day.format(DateTimeFormatter.ISO_LOCAL_DATE));
-            entry.put("total", saleRepository.sumTotal(user.getShopId(), from, to));
+            entry.put("total", saleRepository.sumTotalForBranch(user.getShopId(), user.getBranchId(), from, to));
             result.add(entry);
         }
         return result;
@@ -79,7 +80,8 @@ public class DashboardService {
 
     public List<Map<String, Object>> topProducts(CurrentUser user) {
         Map<String, Map<String, Object>> byProduct = new HashMap<>();
-        for (Sale sale : saleRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId())) {
+        for (Sale sale : saleRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId()).stream()
+                .filter(s -> user.getBranchId().equals(s.getBranchId())).toList()) {
             for (var item : saleItemRepository.findBySaleId(sale.getSaleId())) {
                 Map<String, Object> agg = byProduct.computeIfAbsent(item.getProductId(), k -> {
                     Map<String, Object> m = new HashMap<>();

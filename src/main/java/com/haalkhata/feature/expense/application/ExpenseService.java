@@ -33,32 +33,44 @@ public class ExpenseService {
     }
 
     public List<Map<String, Object>> list(CurrentUser user) {
-        return expenseRepository.findByShopIdAndIsDeletedFalseOrderByDateDesc(user.getShopId())
+        return expenseRepository.findByShopIdAndBranchIdAndIsDeletedFalseOrderByDateDesc(user.getShopId(), user.getBranchId())
                 .stream().map(this::toJson).toList();
     }
 
     public List<Map<String, Object>> listBetween(CurrentUser user, LocalDateTime from, LocalDateTime to) {
-        return expenseRepository.findByShopIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(
-                        user.getShopId(), from, to)
+        return expenseRepository.findByShopIdAndBranchIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(
+                        user.getShopId(), user.getBranchId(), from, to)
                 .stream().map(this::toJson).toList();
     }
 
     @Transactional
     public Map<String, Object> upsert(CurrentUser user, UpsertRequest request) {
+        if (request.description() != null && request.description().isBlank()) {
+            throw BusinessException.badRequest("Expense description is required");
+        }
+        if (request.amount() != null
+                && (!Double.isFinite(request.amount()) || request.amount() < 0)) {
+            throw BusinessException.badRequest("Expense amount must be a valid non-negative amount");
+        }
         Expense expense;
         boolean isNew = request.expenseId() == null || request.expenseId().isBlank();
         if (isNew) {
             expense = Expense.builder()
                     .expenseId(Ids.uuid())
                     .shopId(user.getShopId())
+                    .branchId(user.getBranchId())
+                    .staffId(user.getUserId())
                     .amount(0)
                     .date(LocalDateTime.now())
                     .isDeleted(false)
                     .updatedAt(LocalDateTime.now())
                     .build();
         } else {
-            expense = expenseRepository.findByExpenseIdAndShopIdAndIsDeletedFalse(request.expenseId(), user.getShopId())
+            expense = expenseRepository.findByExpenseIdAndShopIdAndBranchIdAndIsDeletedFalse(request.expenseId(), user.getShopId(), user.getBranchId())
                     .orElseThrow(() -> BusinessException.notFound("Expense not found"));
+        }
+        if (expense.getDescription() == null || expense.getDescription().isBlank()) {
+            throw BusinessException.badRequest("Expense description is required");
         }
         expense.setDescription(request.description() == null ? expense.getDescription() : request.description().trim());
         if (request.amount() != null) {
@@ -82,7 +94,7 @@ public class ExpenseService {
 
     @Transactional
     public void delete(CurrentUser user, String expenseId) {
-        Expense expense = expenseRepository.findByExpenseIdAndShopIdAndIsDeletedFalse(expenseId, user.getShopId())
+        Expense expense = expenseRepository.findByExpenseIdAndShopIdAndBranchIdAndIsDeletedFalse(expenseId, user.getShopId(), user.getBranchId())
                 .orElseThrow(() -> BusinessException.notFound("Expense not found"));
         expense.setDeleted(true);
         expense.setUpdatedAt(LocalDateTime.now());
@@ -101,6 +113,8 @@ public class ExpenseService {
         json.put("date", e.getDate().format(ISO));
         json.put("notes", e.getNotes());
         json.put("shopId", e.getShopId());
+        json.put("branchId", e.getBranchId());
+        json.put("staffId", e.getStaffId());
         json.put("updatedAt", e.getUpdatedAt().format(ISO));
         json.put("isDeleted", e.isDeleted());
         return json;

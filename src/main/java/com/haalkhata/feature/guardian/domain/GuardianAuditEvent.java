@@ -17,6 +17,7 @@ import lombok.Setter;
 public class GuardianAuditEvent {
     @Id @Column(name = "event_id", length = 36) private String eventId;
     @Column(name = "shop_id", nullable = false, length = 60) private String shopId;
+    @Column(name = "branch_id", nullable = false, length = 80) private String branchId;
     @Column(name = "actor_user_id", nullable = false, length = 36) private String actorUserId;
     @Column(nullable = false, length = 40) private String action;
     @Column(name = "entity_type", nullable = false, length = 40) private String entityType;

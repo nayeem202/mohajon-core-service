@@ -28,6 +28,9 @@ public class Product {
     @Column(name = "shop_id", nullable = false, length = 60)
     private String shopId;
 
+    @Column(name = "branch_id", nullable = false, length = 80)
+    private String branchId;
+
     @Column(name = "name_en", nullable = false, length = 200)
     private String nameEn;
 
@@ -36,6 +39,15 @@ public class Product {
 
     @Column(length = 100)
     private String barcode;
+
+    @Column(length = 100)
+    private String sku;
+
+    @Column(name = "variant_name", length = 120)
+    private String variantName;
+
+    @Column(name = "batch_number", length = 100)
+    private String batchNumber;
 
     @Column(length = 100)
     private String category;

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DueRecoveryPlanRepository extends JpaRepository<DueRecoveryPlan, String> {
 
+
     Optional<DueRecoveryPlan> findByShopIdAndCustomerId(String shopId, String customerId);
 
     void deleteByShopId(String shopId);

@@ -8,8 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, String> {
 
     Optional<PurchaseOrder> findByOrderIdAndShopId(String orderId, String shopId);
+    Optional<PurchaseOrder> findByOrderIdAndShopIdAndBranchId(String orderId, String shopId, String branchId);
 
     List<PurchaseOrder> findByShopIdOrderByCreatedAtDesc(String shopId);
+    List<PurchaseOrder> findByShopIdAndBranchIdOrderByCreatedAtDesc(String shopId, String branchId);
 
     void deleteByShopId(String shopId);
 }

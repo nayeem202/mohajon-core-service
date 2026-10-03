@@ -28,7 +28,11 @@ public class DueRecoveryService {
     public record PlanRequest(LocalDate promisedPaymentDate, LocalDateTime snoozedUntil) {
     }
 
-    public record FollowUpRequest(String id, String channel, String note) {
+    public record FollowUpRequest(String id, String channel, String note, String status,
+                                  String failureReason, String providerMessageId) {
+    }
+
+    public record StatusRequest(String status, String failureReason, String providerMessageId) {
     }
 
     @Transactional(readOnly = true)
@@ -75,6 +79,11 @@ public class DueRecoveryService {
         if (note != null && note.length() > 500) {
             throw BusinessException.badRequest("Follow-up note is too long");
         }
+        String status = request.status() == null || request.status().isBlank()
+                ? "opened" : request.status().trim().toLowerCase();
+        if (!List.of("queued", "sent", "delivered", "opened", "failed").contains(status)) {
+            throw BusinessException.badRequest("Unsupported follow-up status");
+        }
         String followUpId = request.id() == null || request.id().isBlank()
                 ? Ids.uuid() : request.id().trim();
         var existing = followUpRepository.findById(followUpId);
@@ -83,6 +92,25 @@ public class DueRecoveryService {
                     || !customerId.equals(existing.get().getCustomerId())) {
                 throw BusinessException.forbidden("Follow-up belongs to another shop");
             }
+            var current = existing.get();
+            if (!channel.equals(current.getChannel())) {
+                throw BusinessException.badRequest("Follow-up channel cannot be changed");
+            }
+            String failureReason = trim(request.failureReason(), 500);
+            String providerMessageId = trim(request.providerMessageId(), 200);
+            String nextNote = note != null && !note.isBlank() ? note : current.getNote();
+            boolean changed = !status.equals(current.getStatus())
+                    || !java.util.Objects.equals(nextNote, current.getNote())
+                    || !java.util.Objects.equals(failureReason, current.getFailureReason())
+                    || !java.util.Objects.equals(providerMessageId, current.getProviderMessageId());
+            if (!changed) return get(user, customerId);
+            current.setStatus(status);
+            current.setNote(nextNote);
+            current.setFailureReason(failureReason);
+            current.setProviderMessageId(providerMessageId);
+            current.setStatusChangedAt(LocalDateTime.now());
+            current.setUpdatedAt(LocalDateTime.now());
+            followUpRepository.save(current);
             return get(user, customerId);
         }
         followUpRepository.save(DueRecoveryFollowUp.builder()
@@ -91,8 +119,35 @@ public class DueRecoveryService {
                 .customerId(customerId)
                 .channel(channel)
                 .note(note)
+                .status(status)
+                .statusChangedAt(LocalDateTime.now())
+                .failureReason(trim(request.failureReason(), 500))
+                .providerMessageId(trim(request.providerMessageId(), 200))
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build());
+        return get(user, customerId);
+    }
+
+    @Transactional
+    public Map<String, Object> updateStatus(CurrentUser user, String customerId,
+                                            String followUpId, StatusRequest request) {
+        requireCustomer(user, customerId);
+        String status = request == null || request.status() == null
+                ? "" : request.status().trim().toLowerCase();
+        if (!List.of("queued", "sent", "delivered", "opened", "failed").contains(status)) {
+            throw BusinessException.badRequest("Unsupported follow-up status");
+        }
+        var followUp = followUpRepository.findById(followUpId)
+                .filter(item -> user.getShopId().equals(item.getShopId())
+                        && customerId.equals(item.getCustomerId()))
+                .orElseThrow(() -> BusinessException.notFound("Follow-up not found"));
+        followUp.setStatus(status);
+        followUp.setFailureReason(trim(request == null ? null : request.failureReason(), 500));
+        followUp.setProviderMessageId(trim(request == null ? null : request.providerMessageId(), 200));
+        followUp.setStatusChangedAt(LocalDateTime.now());
+        followUp.setUpdatedAt(LocalDateTime.now());
+        followUpRepository.save(followUp);
         return get(user, customerId);
     }
 
@@ -114,11 +169,25 @@ public class DueRecoveryService {
             result.put("promisedPaymentDate", null);
             result.put("snoozedUntil", null);
         }
-        result.put("followUps", followUps.stream().map(item -> Map.of(
-                "id", item.getFollowUpId(),
-                "channel", item.getChannel(),
-                "note", item.getNote() == null ? "" : item.getNote(),
-                "createdAt", item.getCreatedAt())).toList());
+        result.put("followUps", followUps.stream().map(item -> {
+            Map<String, Object> json = new HashMap<>();
+            json.put("id", item.getFollowUpId());
+            json.put("channel", item.getChannel());
+            json.put("note", item.getNote() == null ? "" : item.getNote());
+            json.put("status", item.getStatus());
+            json.put("statusChangedAt", item.getStatusChangedAt());
+            json.put("failureReason", item.getFailureReason() == null ? "" : item.getFailureReason());
+            json.put("providerMessageId", item.getProviderMessageId() == null ? "" : item.getProviderMessageId());
+            json.put("createdAt", item.getCreatedAt());
+            json.put("updatedAt", item.getUpdatedAt());
+            return json;
+        }).toList());
         return result;
+    }
+
+    private String trim(String value, int max) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.substring(0, Math.min(max, trimmed.length()));
     }
 }

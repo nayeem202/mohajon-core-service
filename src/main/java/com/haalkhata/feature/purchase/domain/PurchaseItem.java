@@ -37,4 +37,10 @@ public class PurchaseItem {
 
     @Column(name = "unit_cost", nullable = false)
     private double unitCost;
+
+    @Column(name = "batch_number", length = 100)
+    private String batchNumber;
+
+    @Column(name = "expiry_date")
+    private java.time.LocalDate expiryDate;
 }

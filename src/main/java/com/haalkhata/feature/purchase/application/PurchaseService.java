@@ -5,6 +5,8 @@ import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.core.util.Ids;
 import com.haalkhata.core.util.MoneyUtil;
 import com.haalkhata.feature.product.infrastructure.ProductRepository;
+import com.haalkhata.feature.product.domain.ProductBatch;
+import com.haalkhata.feature.product.infrastructure.ProductBatchRepository;
 import com.haalkhata.feature.purchase.domain.Purchase;
 import com.haalkhata.feature.purchase.domain.PurchaseItem;
 import com.haalkhata.feature.purchase.domain.Supplier;
@@ -33,11 +35,13 @@ public class PurchaseService {
     private final PurchaseItemRepository purchaseItemRepository;
     private final SupplierRepository supplierRepository;
     private final ProductRepository productRepository;
+    private final ProductBatchRepository productBatchRepository;
 
     public record SupplierRequest(String supplierId, String name, String phone, Boolean isDeleted) {
     }
 
-    public record PurchaseItemRequest(String productId, String name, double qty, double unitCost) {
+    public record PurchaseItemRequest(String productId, String name, double qty, double unitCost,
+                                      String batchNumber, java.time.LocalDate expiryDate) {
     }
 
     public record CreatePurchaseRequest(String purchaseId, String supplierId,
@@ -90,12 +94,12 @@ public class PurchaseService {
     // -------- Purchases --------
 
     public List<Map<String, Object>> list(CurrentUser user) {
-        return purchaseRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId())
+        return purchaseRepository.findByShopIdAndBranchIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId(), user.getBranchId())
                 .stream().map(this::purchaseJson).toList();
     }
 
     public Map<String, Object> get(CurrentUser user, String purchaseId) {
-        return purchaseRepository.findByPurchaseIdAndShopIdAndIsDeletedFalse(purchaseId, user.getShopId())
+        return purchaseRepository.findByPurchaseIdAndShopIdAndBranchIdAndIsDeletedFalse(purchaseId, user.getShopId(), user.getBranchId())
                 .map(this::purchaseJson)
                 .orElseThrow(() -> BusinessException.notFound("Purchase not found"));
     }
@@ -109,15 +113,40 @@ public class PurchaseService {
                 .findBySupplierIdAndShopIdAndIsDeletedFalse(request.supplierId(), user.getShopId())
                 .orElseThrow(() -> BusinessException.notFound("Supplier not found"));
 
-        double total = MoneyUtil.round2(request.totalAmount() == null ? 0 : request.totalAmount());
+        double calculatedTotal = 0;
+        for (PurchaseItemRequest item : request.items()) {
+            if (!Double.isFinite(item.qty()) || item.qty() <= 0) {
+                throw BusinessException.badRequest("Quantity must be greater than zero for " + item.name());
+            }
+            if (item.qty() != Math.floor(item.qty())) {
+                throw BusinessException.badRequest(
+                        "Fractional quantity is not supported for " + item.name());
+            }
+            if (!Double.isFinite(item.unitCost()) || item.unitCost() < 0) {
+                throw BusinessException.badRequest("Unit cost must be a valid non-negative amount for " + item.name());
+            }
+            calculatedTotal += item.qty() * item.unitCost();
+        }
+        double total = MoneyUtil.round2(calculatedTotal);
+        if (request.totalAmount() != null
+                && (!Double.isFinite(request.totalAmount())
+                || Math.abs(MoneyUtil.round2(request.totalAmount()) - total) > 0.01)) {
+            throw BusinessException.badRequest("Purchase total does not match the item lines");
+        }
+        double paidAmount = request.paidAmount() == null ? 0 : request.paidAmount();
+        if (!Double.isFinite(paidAmount) || paidAmount < 0 || paidAmount > total + 0.005) {
+            throw BusinessException.badRequest("Paid amount must be between zero and the purchase total");
+        }
         LocalDateTime now = LocalDateTime.now();
         Purchase purchase = Purchase.builder()
                 .purchaseId(request.purchaseId() == null || request.purchaseId().isBlank()
                         ? Ids.uuid() : request.purchaseId())
                 .shopId(user.getShopId())
+                .branchId(user.getBranchId())
+                .staffId(user.getUserId())
                 .supplierId(supplier.getSupplierId())
                 .totalAmount(total)
-                .paidAmount(MoneyUtil.round2(request.paidAmount() == null ? 0 : request.paidAmount()))
+                .paidAmount(MoneyUtil.round2(paidAmount))
                 .createdAt(now)
                 .updatedAt(now)
                 .isDeleted(false)
@@ -139,10 +168,36 @@ public class PurchaseService {
                     .name(item.name())
                     .qty(item.qty())
                     .unitCost(item.unitCost())
+                    .batchNumber(item.batchNumber() == null ? null : item.batchNumber().trim())
+                    .expiryDate(item.expiryDate())
                     .build());
             if (item.productId() != null && !item.productId().isBlank()) {
-                productRepository.incrementStock(item.productId(), user.getShopId(),
+                productRepository.incrementStock(item.productId(), user.getShopId(), user.getBranchId(),
                         (int) item.qty(), now);
+                productRepository.findByProductIdAndShopIdAndBranchIdAndIsDeletedFalse(item.productId(), user.getShopId(), user.getBranchId())
+                        .ifPresent(product -> {
+                            if (item.batchNumber() != null && !item.batchNumber().isBlank()) {
+                                product.setBatchNumber(item.batchNumber().trim());
+                            }
+                            if (item.expiryDate() != null) product.setExpiryDate(item.expiryDate());
+                            product.setUpdatedAt(now);
+                            productRepository.save(product);
+                        });
+                if (item.batchNumber() != null && !item.batchNumber().isBlank()) {
+                    ProductBatch batch = productBatchRepository.findByShopIdAndBranchIdAndProductIdAndIsDeletedFalseOrderByExpiryDateAsc(
+                                    user.getShopId(), user.getBranchId(), item.productId()).stream()
+                            .filter(b -> item.batchNumber().trim().equals(b.getBatchNumber())
+                                    && java.util.Objects.equals(item.expiryDate(), b.getExpiryDate()))
+                            .findFirst()
+                            .orElseGet(() -> ProductBatch.builder()
+                                    .batchId(Ids.uuid()).shopId(user.getShopId()).branchId(user.getBranchId()).productId(item.productId())
+                                    .batchNumber(item.batchNumber().trim()).expiryDate(item.expiryDate())
+                                    .quantity(0).unitCost(item.unitCost()).updatedAt(now).isDeleted(false).build());
+                    batch.setQuantity(batch.getQuantity() + (int) item.qty());
+                    batch.setUnitCost(item.unitCost());
+                    batch.setUpdatedAt(now);
+                    productBatchRepository.save(batch);
+                }
             }
         }
         log.info("PURCHASE_CREATED purchaseId={} supplier={} total={}",
@@ -152,7 +207,8 @@ public class PurchaseService {
 
     @Transactional
     public void delete(CurrentUser user, String purchaseId) {
-        Purchase purchase = purchaseRepository.findByPurchaseIdAndShopIdAndIsDeletedFalse(purchaseId, user.getShopId())
+        Purchase purchase = purchaseRepository.findByPurchaseIdAndShopIdAndBranchIdAndIsDeletedFalse(
+                        purchaseId, user.getShopId(), user.getBranchId())
                 .orElseThrow(() -> BusinessException.notFound("Purchase not found"));
         LocalDateTime now = LocalDateTime.now();
         // Reverse the stock added by this purchase. If any item has since been
@@ -160,7 +216,7 @@ public class PurchaseService {
         // so stock never silently goes negative.
         for (PurchaseItem item : purchaseItemRepository.findByPurchaseId(purchaseId)) {
             if (item.getProductId() != null && !item.getProductId().isBlank()) {
-                int affected = productRepository.decrementStock(item.getProductId(), user.getShopId(),
+                int affected = productRepository.decrementStock(item.getProductId(), user.getShopId(), user.getBranchId(),
                         (int) item.getQty(), now);
                 if (affected == 0) {
                     throw BusinessException.badRequest("Cannot delete purchase: stock for "
@@ -193,6 +249,8 @@ public class PurchaseService {
                     m.put("name", i.getName());
                     m.put("qty", i.getQty());
                     m.put("unitCost", i.getUnitCost());
+                    m.put("batchNumber", i.getBatchNumber() == null ? "" : i.getBatchNumber());
+                    m.put("expiryDate", i.getExpiryDate());
                     return m;
                 }).toList();
         Map<String, Object> json = new HashMap<>();
@@ -202,6 +260,8 @@ public class PurchaseService {
         json.put("totalAmount", p.getTotalAmount());
         json.put("paidAmount", p.getPaidAmount());
         json.put("shopId", p.getShopId());
+        json.put("branchId", p.getBranchId());
+        json.put("staffId", p.getStaffId());
         json.put("createdAt", p.getCreatedAt().format(ISO));
         json.put("updatedAt", p.getUpdatedAt().format(ISO));
         json.put("isDeleted", p.isDeleted());

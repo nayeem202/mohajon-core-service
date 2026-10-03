@@ -28,18 +28,18 @@ public class GuardianService {
         if (metadata != null && !metadata.isEmpty()) {
             try { json = objectMapper.writeValueAsString(metadata); } catch (JsonProcessingException ignored) { json = metadata.toString(); }
         }
-        repository.save(GuardianAuditEvent.builder().eventId(Ids.uuid()).shopId(user.getShopId()).actorUserId(user.getUserId())
+        repository.save(GuardianAuditEvent.builder().eventId(Ids.uuid()).shopId(user.getShopId()).branchId(user.getBranchId()).actorUserId(user.getUserId())
                 .action(action).entityType(entityType).entityId(entityId).amount(amount).metadata(json).createdAt(LocalDateTime.now()).build());
     }
 
     @Transactional(readOnly = true)
     public Map<String, Object> dashboard(CurrentUser user) {
-        List<Map<String, Object>> events = repository.findTop100ByShopIdOrderByCreatedAtDesc(user.getShopId()).stream().map(this::toMap).toList();
+        List<Map<String, Object>> events = repository.findTop100ByShopIdAndBranchIdOrderByCreatedAtDesc(user.getShopId(), user.getBranchId()).stream().map(this::toMap).toList();
         List<Map<String, Object>> alerts = new ArrayList<>();
         events.stream().filter(e -> "DELETE".equals(e.get("action"))).limit(5).forEach(e -> alerts.add(alert("deletion", "A record was deleted", "Review this deletion in the audit timeline.", e)));
         events.stream().filter(e -> "SALE_CREATED".equals(e.get("action")) && ((Number) e.getOrDefault("amount", 0)).doubleValue() >= 10000).limit(5)
                 .forEach(e -> alerts.add(alert("large_sale", "Large sale recorded", "Confirm the payment and stock movement for this sale.", e)));
-        expenseRepository.findByShopIdAndIsDeletedFalseOrderByDateDesc(user.getShopId()).stream().filter(e -> e.getAmount() >= 10000).limit(5).forEach(e -> {
+        expenseRepository.findByShopIdAndBranchIdAndIsDeletedFalseOrderByDateDesc(user.getShopId(), user.getBranchId()).stream().filter(e -> e.getAmount() >= 10000).limit(5).forEach(e -> {
             Map<String, Object> a = new LinkedHashMap<>(); a.put("type", "large_expense"); a.put("title", "Large expense needs review"); a.put("body", e.getDescription()); a.put("amount", e.getAmount()); alerts.add(a);
         });
         Map<String, Object> response = new LinkedHashMap<>(); response.put("riskScore", Math.min(100, alerts.size() * 12)); response.put("alerts", alerts.stream().limit(12).toList()); response.put("events", events); return response;

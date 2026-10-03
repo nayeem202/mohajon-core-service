@@ -68,6 +68,7 @@ public class ProductController {
 
     private UpsertRequest withId(UpsertRequest request, String productId) {
         return new UpsertRequest(productId, request.nameEn(), request.nameBn(), request.barcode(),
+                request.sku(), request.variantName(), request.batchNumber(),
                 request.category(), request.unit(), request.imagePath(), request.buyingPrice(),
                 request.purchasePrice(), request.sellingPrice(), request.stockQty(),
                 request.lowStockAlert(), request.expiryDate(), request.isDeleted());

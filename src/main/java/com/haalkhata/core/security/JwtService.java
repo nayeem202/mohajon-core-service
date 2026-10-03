@@ -85,4 +85,18 @@ public class JwtService {
     public String generateRefreshToken() {
         return java.util.UUID.randomUUID() + "." + java.util.UUID.randomUUID();
     }
+
+    public String issuePublicInvoiceToken(String saleId, String shopId) {
+        return issuePublicInvoiceToken(saleId, shopId, null);
+    }
+
+    public String issuePublicInvoiceToken(String saleId, String shopId, String branchId) {
+        Instant now = Instant.now();
+        var builder = Jwts.builder().subject(saleId)
+                .claim("shopId", shopId).claim("purpose", "public-invoice");
+        if (branchId != null && !branchId.isBlank()) builder.claim("branchId", branchId);
+        return builder
+                .issuedAt(Date.from(now)).expiration(Date.from(now.plus(Duration.ofDays(30))))
+                .signWith(key).compact();
+    }
 }

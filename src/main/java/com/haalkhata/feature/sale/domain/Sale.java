@@ -24,6 +24,9 @@ public class Sale {
     @Column(name = "sale_id", length = 36)
     private String saleId;
 
+    @Column(name = "invoice_number", length = 40)
+    private String invoiceNumber;
+
     @Column(name = "shop_id", nullable = false, length = 60)
     private String shopId;
 
@@ -54,8 +57,26 @@ public class Sale {
     @Column(name = "payment_method", nullable = false, length = 20)
     private String paymentMethod;
 
+    @Column(name = "loyalty_points_redeemed", nullable = false)
+    private int loyaltyPointsRedeemed;
+
+    @Column(name = "loyalty_points_earned", nullable = false)
+    private int loyaltyPointsEarned;
+
     @Column(name = "staff_id", length = 36)
     private String staffId;
+
+    @Column(name = "branch_id", length = 80)
+    private String branchId;
+
+    @Column(name = "discount_staff_id", length = 36)
+    private String discountStaffId;
+
+    @Column(name = "voided_by_staff_id", length = 36)
+    private String voidedByStaffId;
+
+    @Column(name = "voided_at")
+    private LocalDateTime voidedAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

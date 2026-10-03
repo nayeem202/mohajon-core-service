@@ -99,26 +99,26 @@ class SyncServicePullTest {
      */
     private void stubProductQueries() {
         Answer<List<Product>> liveDeleted = inv -> {
-            LocalDateTime after = inv.getArgument(1);
+            LocalDateTime after = inv.getArgument(2);
             return liveProducts.stream()
                     .filter(p -> p.isDeleted() && p.getUpdatedAt().isAfter(after))
                     .toList();
         };
         Answer<List<Product>> liveActive = inv -> {
-            LocalDateTime after = inv.getArgument(1);
+            LocalDateTime after = inv.getArgument(2);
             return liveProducts.stream()
                     .filter(p -> !p.isDeleted() && p.getUpdatedAt().isAfter(after))
                     .toList();
         };
-        when(productRepository.findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(eq("shop_1"), any()))
+        when(productRepository.findByShopIdAndBranchIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(eq("shop_1"), eq("shop_1-main"), any()))
                 .thenAnswer(liveActive);
-        when(productRepository.findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(eq("shop_1"), any()))
+        when(productRepository.findByShopIdAndBranchIdAndIsDeletedTrueAndUpdatedAtGreaterThan(eq("shop_1"), eq("shop_1-main"), any()))
                 .thenAnswer(liveDeleted);
     }
 
     private static Product product(String id, LocalDateTime updatedAt, boolean deleted) {
         return Product.builder()
-                .productId(id).shopId("shop_1").nameEn("Product " + id)
+                .productId(id).shopId("shop_1").branchId("shop_1-main").nameEn("Product " + id)
                 .buyingPrice(10.0).purchasePrice(10.0).sellingPrice(12.0)
                 .stockQty(5).lowStockAlert(1)
                 .isDeleted(deleted).updatedAt(updatedAt)

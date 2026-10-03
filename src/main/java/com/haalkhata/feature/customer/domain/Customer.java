@@ -48,6 +48,12 @@ public class Customer {
     @Column(name = "total_spent", nullable = false)
     private double totalSpent;
 
+    @Column(name = "credit_limit", nullable = false)
+    private double creditLimit;
+
+    @Column(name = "loyalty_points", nullable = false)
+    private int loyaltyPoints;
+
     @Column(length = 50)
     private String tag;
 

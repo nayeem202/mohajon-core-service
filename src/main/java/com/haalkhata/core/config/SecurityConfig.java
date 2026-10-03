@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/api/v1/bkash/callback", "/actuator/health", "/error").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/bkash/callback", "/public/invoices/**", "/actuator/health", "/error").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/files/**").permitAll()
                         .anyRequest().authenticated())
                 // Missing/expired token must be 401 (not 403) so the app's

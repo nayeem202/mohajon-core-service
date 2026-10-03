@@ -51,13 +51,15 @@ public class PaymentService {
 
     public List<Map<String, Object>> list(CurrentUser user) {
         return paymentRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId())
-                .stream().map(this::toJson).toList();
+                .stream().filter(p -> user.getBranchId().equals(p.getBranchId()))
+                .map(this::toJson).toList();
     }
 
     public List<Map<String, Object>> listForCustomer(CurrentUser user, String customerId) {
         return paymentRepository.findByShopIdAndCustomerIdAndIsDeletedFalseOrderByCreatedAtDesc(
                         user.getShopId(), customerId)
-                .stream().map(this::toJson).toList();
+                .stream().filter(p -> user.getBranchId().equals(p.getBranchId()))
+                .map(this::toJson).toList();
     }
 
     @Transactional
@@ -117,6 +119,8 @@ public class PaymentService {
                 .amount(amount)
                 .paymentMethod(method)
                 .reference(request.reference())
+                .staffId(user.getUserId())
+                .branchId(user.getBranchId())
                 .createdAt(now)
                 .updatedAt(now)
                 .isDeleted(false)
@@ -182,6 +186,8 @@ public class PaymentService {
         json.put("amount", MoneyUtil.round2(p.getAmount()));
         json.put("paymentMethod", p.getPaymentMethod());
         json.put("reference", p.getReference());
+        json.put("staffId", p.getStaffId());
+        json.put("branchId", p.getBranchId());
         json.put("shopId", p.getShopId());
         json.put("createdAt", p.getCreatedAt().format(ISO));
         json.put("updatedAt", p.getUpdatedAt().format(ISO));

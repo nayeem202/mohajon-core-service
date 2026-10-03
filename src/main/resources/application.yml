@@ -64,6 +64,7 @@ app:
   log-request-body: ${LOG_REQUEST_BODY:true}
   # When true, sales/reports require an active subscription for the shop.
   enforce-subscription: ${SUBSCRIPTION_ENFORCEMENT:false}
+  public-base-url: ${PUBLIC_BASE_URL:}
   bkash:
     base-url: ${BKASH_BASE_URL:https://tokenized.sandbox.bka.sh/v1.2.0-beta}
     app-key: ${BKASH_APP_KEY:4f6o0cjiki2rfm34kfdadl1eqq}

@@ -12,6 +12,8 @@ import com.haalkhata.feature.sale.domain.Sale;
 import com.haalkhata.feature.sale.domain.SaleItem;
 import com.haalkhata.feature.sale.infrastructure.SaleItemRepository;
 import com.haalkhata.feature.sale.infrastructure.SaleRepository;
+import com.haalkhata.feature.sale.returning.infrastructure.SaleReturnRepository;
+import com.haalkhata.feature.sale.returning.infrastructure.SaleReturnItemRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +36,8 @@ public class ReportService {
     private final ExpenseRepository expenseRepository;
     private final ProductRepository productRepository;
     private final PaymentRepository paymentRepository;
+    private final SaleReturnRepository saleReturnRepository;
+    private final SaleReturnItemRepository saleReturnItemRepository;
 
     public Map<String, Object> salesSummary(CurrentUser user, LocalDate from, LocalDate to) {
         LocalDateTime start = (from == null ? LocalDate.of(2000, 1, 1) : from).atStartOfDay();
@@ -97,7 +101,7 @@ public class ReportService {
         LocalDateTime start = (from == null ? LocalDate.of(2000, 1, 1) : from).atStartOfDay();
         LocalDateTime end = (to == null ? LocalDate.now() : to).plusDays(1).atStartOfDay();
         List<Map<String, Object>> expenses = expenseRepository
-                .findByShopIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(user.getShopId(), start, end)
+                .findByShopIdAndBranchIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(user.getShopId(), user.getBranchId(), start, end)
                 .stream().map(e -> {
                     Map<String, Object> json = new LinkedHashMap<>();
                     json.put("expenseId", e.getExpenseId());
@@ -169,7 +173,8 @@ public class ReportService {
         List<Map<String, Object>> rows = salesInRange(user, r).stream().map(s -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("date", dateStr(s.getCreatedAt()));
-            row.put("invoice", s.getSaleId());
+            row.put("invoice", s.getInvoiceNumber() == null || s.getInvoiceNumber().isBlank()
+                    ? s.getSaleId() : s.getInvoiceNumber());
             row.put("customer", s.getCustomerId());
             row.put("discount", money(s.getDiscount()));
             row.put("vat", money(s.getVatPercent()));
@@ -221,7 +226,7 @@ public class ReportService {
     public ReportTable expenseTable(CurrentUser user, LocalDate from, LocalDate to) {
         LocalDateTime[] r = range(from, to);
         List<Expense> expenses = expenseRepository
-                .findByShopIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(user.getShopId(), r[0], r[1]);
+                .findByShopIdAndBranchIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(user.getShopId(), user.getBranchId(), r[0], r[1]);
         double total = expenses.stream().mapToDouble(Expense::getAmount).sum();
         List<Map<String, Object>> rows = expenses.stream().map(e -> {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -270,11 +275,13 @@ public class ReportService {
         double cogs = 0;
         for (Sale s : sales) {
             List<SaleItem> items = saleItemRepository.findBySaleId(s.getSaleId());
-            cogs += items.stream().mapToDouble(i -> i.getQty() * i.getPurchasePrice()).sum();
+            Map<String, Double> returned = returnedQty(s, user);
+            cogs += items.stream().mapToDouble(i -> Math.max(0, i.getQty() - returned.getOrDefault(i.getId(), 0d))
+                    * i.getPurchasePrice()).sum();
         }
         double gross = revenue - cogs;
         double expenses = expenseRepository
-                .findByShopIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(user.getShopId(), r[0], r[1]).stream()
+                .findByShopIdAndBranchIdAndIsDeletedFalseAndDateBetweenOrderByDateDesc(user.getShopId(), user.getBranchId(), r[0], r[1]).stream()
                 .mapToDouble(Expense::getAmount).sum();
         double net = gross - expenses;
 
@@ -293,13 +300,15 @@ public class ReportService {
         LocalDateTime[] r = range(from, to);
         Map<String, ProductSalesAgg> agg = new LinkedHashMap<>();
         for (Sale s : salesInRange(user, r)) {
+            Map<String, Double> returned = returnedQty(s, user);
             for (SaleItem item : saleItemRepository.findBySaleId(s.getSaleId())) {
                 String pid = item.getProductId() == null || item.getProductId().isBlank()
                         ? "__unknown__" : item.getProductId();
                 ProductSalesAgg a = agg.computeIfAbsent(pid, k -> new ProductSalesAgg(item.getName()));
-                a.qty += item.getQty();
-                a.revenue += item.getQty() * item.getUnitPrice();
-                a.profit += item.getQty() * (item.getUnitPrice() - item.getPurchasePrice());
+                double qty = Math.max(0, item.getQty() - returned.getOrDefault(item.getId(), 0d));
+                a.qty += qty;
+                a.revenue += qty * item.getUnitPrice();
+                a.profit += qty * (item.getUnitPrice() - item.getPurchasePrice());
             }
         }
         List<Map<String, Object>> rows = agg.values().stream()
@@ -327,6 +336,13 @@ public class ReportService {
             v[0]++;
             v[1] += s.getTotalAmount();
             v[2] += s.getPaidAmount();
+        }
+        for (var value : saleReturnRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId()).stream()
+                .filter(item -> user.getBranchId().equals(item.getBranchId()))
+                .filter(item -> !item.getCreatedAt().isBefore(r[0]) && item.getCreatedAt().isBefore(r[1])).toList()) {
+            double[] day = byDay.computeIfAbsent(value.getCreatedAt().toLocalDate(), k -> new double[3]);
+            day[1] -= value.getRefundAmount();
+            day[2] -= value.getRefundAmount();
         }
         List<Map<String, Object>> rows = byDay.entrySet().stream()
                 .sorted((a, b) -> b.getKey().compareTo(a.getKey()))
@@ -365,6 +381,12 @@ public class ReportService {
             }
         }
         agg.put("Cash (Walk-in)", new double[] {walkInCount, walkInSum});
+        for (var value : saleReturnRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId()).stream()
+                .filter(item -> user.getBranchId().equals(item.getBranchId()))
+                .filter(item -> !item.getCreatedAt().isBefore(r[0]) && item.getCreatedAt().isBefore(r[1])).toList()) {
+            double[] row = agg.computeIfAbsent(value.getRefundMethod(), k -> new double[2]);
+            row[1] -= value.getRefundAmount();
+        }
 
         double totalCount = 0;
         double totalAmount = 0;
@@ -430,7 +452,8 @@ public class ReportService {
             totalVat += vatAmount;
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("date", dateStr(s.getCreatedAt()));
-            row.put("invoice", s.getSaleId());
+            row.put("invoice", s.getInvoiceNumber() == null || s.getInvoiceNumber().isBlank()
+                    ? s.getSaleId() : s.getInvoiceNumber());
             row.put("customer", s.getCustomerId());
             row.put("subtotal", money(taxable));
             row.put("vat", money(s.getVatPercent()));
@@ -464,6 +487,7 @@ public class ReportService {
 
     private List<Sale> salesInRange(CurrentUser user, LocalDateTime[] r) {
         return saleRepository.findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(user.getShopId()).stream()
+                .filter(s -> user.getBranchId().equals(s.getBranchId()))
                 .filter(s -> !s.getCreatedAt().isBefore(r[0]) && s.getCreatedAt().isBefore(r[1]))
                 .toList();
     }
@@ -499,6 +523,18 @@ public class ReportService {
         row.put("item", item);
         row.put("amount", money(amount));
         return row;
+    }
+
+    private Map<String, Double> returnedQty(Sale sale, CurrentUser user) {
+        Map<String, Double> result = new HashMap<>();
+        for (var value : saleReturnRepository.findByShopIdAndIsDeletedFalseAndSaleId(
+                user.getShopId(), sale.getSaleId()).stream()
+                .filter(item -> user.getBranchId().equals(item.getBranchId())).toList()) {
+            for (var item : saleReturnItemRepository.findByReturnId(value.getReturnId())) {
+                result.merge(item.getSaleItemId(), item.getQty(), Double::sum);
+            }
+        }
+        return result;
     }
 
     private Map<String, Object> pmRow(String method, double count, double amount) {

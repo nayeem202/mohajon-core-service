@@ -8,18 +8,28 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
 
 public interface SaleRepository extends JpaRepository<Sale, String> {
+
+    @Modifying
+    @Query("update Sale s set s.customerId = :target, s.updatedAt = :now "
+            + "where s.shopId = :shopId and s.customerId = :source and s.isDeleted = false")
+    int reassignCustomer(@Param("shopId") String shopId, @Param("source") String source,
+                         @Param("target") String target, @Param("now") LocalDateTime now);
 
     List<Sale> findByShopIdAndIsDeletedFalseOrderByCreatedAtDesc(String shopId);
 
     List<Sale> findByShopIdAndIsDeletedFalseAndCustomerIdOrderByCreatedAtDesc(String shopId, String customerId);
 
     Optional<Sale> findBySaleIdAndShopIdAndIsDeletedFalse(String saleId, String shopId);
+    Optional<Sale> findBySaleIdAndShopIdAndBranchIdAndIsDeletedFalse(String saleId, String shopId, String branchId);
 
     List<Sale> findByShopIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, LocalDateTime after);
 
     List<Sale> findByShopIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, LocalDateTime after);
+    List<Sale> findByShopIdAndBranchIdAndIsDeletedFalseAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(String shopId, String branchId, LocalDateTime after);
+    List<Sale> findByShopIdAndBranchIdAndIsDeletedTrueAndUpdatedAtGreaterThan(String shopId, String branchId, LocalDateTime after);
 
     @Query("select coalesce(sum(s.totalAmount), 0) from Sale s where s.shopId = :shopId "
             + "and s.isDeleted = false and s.createdAt >= :from and s.createdAt < :to")
@@ -38,6 +48,20 @@ public interface SaleRepository extends JpaRepository<Sale, String> {
             + "and s.isDeleted = false and s.createdAt >= :from and s.createdAt < :to and s.customerId = :customerId")
     double sumPaidForCustomer(@Param("shopId") String shopId, @Param("customerId") String customerId,
                               @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("select coalesce(sum(s.dueAmount), 0) from Sale s where s.shopId = :shopId "
+            + "and s.isDeleted = false and s.customerId = :customerId")
+    double sumDueForCustomer(@Param("shopId") String shopId, @Param("customerId") String customerId);
+
+    @Query("select coalesce(sum(s.totalAmount), 0) from Sale s where s.shopId = :shopId "
+            + "and s.branchId = :branchId and s.isDeleted = false and s.createdAt >= :from and s.createdAt < :to")
+    double sumTotalForBranch(@Param("shopId") String shopId, @Param("branchId") String branchId,
+                             @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("select coalesce(sum(s.paidAmount), 0) from Sale s where s.shopId = :shopId "
+            + "and s.branchId = :branchId and s.isDeleted = false and s.createdAt >= :from and s.createdAt < :to")
+    double sumPaidForBranch(@Param("shopId") String shopId, @Param("branchId") String branchId,
+                            @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     void deleteByShopId(String shopId);
 }
