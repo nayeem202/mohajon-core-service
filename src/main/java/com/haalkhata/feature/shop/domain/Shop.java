@@ -36,6 +36,9 @@ public class Shop {
     @Column(name = "phone_number", length = 30)
     private String phoneNumber;
 
+    @Column(name = "business_type", length = 64)
+    private String businessType;
+
     @Column(length = 50)
     private String tin;
 

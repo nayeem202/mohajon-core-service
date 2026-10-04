@@ -84,7 +84,7 @@ public class ShopService {
     private final BranchMemberRepository branchMemberRepository;
 
     public record UpdateShopRequest(String name, String location, String phoneNumber, String imagePath,
-                                    List<OwnerDto> owners, String tin, String bin) {
+                                    List<OwnerDto> owners, String tin, String bin, String businessType) {
     }
 
     public record OwnerDto(String ownerId, String name, Double investmentAmount) {
@@ -133,6 +133,7 @@ public class ShopService {
                     .shopId(user.getShopId())
                     .ownerUserId(user.getUserId())
                     .name(user.getName() == null ? "My Shop" : user.getName() + "'s Shop")
+                    .businessType("general")
                     .ownerCount(1)
                     .totalInvestment(0)
                     .loyaltyOfferEnabled(true)
@@ -173,6 +174,7 @@ public class ShopService {
                     .shopId(user.getShopId())
                     .ownerUserId(user.getUserId())
                     .name(user.getName() == null ? "My Shop" : user.getName() + "'s Shop")
+                    .businessType("general")
                     .ownerCount(1)
                     .totalInvestment(0)
                     .loyaltyOfferEnabled(true)
@@ -203,6 +205,9 @@ public class ShopService {
         }
         if (request.phoneNumber() != null) {
             shop.setPhoneNumber(request.phoneNumber().trim());
+        }
+        if (request.businessType() != null && !request.businessType().isBlank()) {
+            shop.setBusinessType(request.businessType().trim());
         }
         if (request.imagePath() != null) {
             shop.setImagePath(request.imagePath().isBlank() ? null : request.imagePath().trim());
@@ -244,8 +249,14 @@ public class ShopService {
                         .isDefault(true).isActive(true).createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now()).build()));
         if (branchMemberRepository.findByBranchIdAndUserId(branch.getBranchId(), user.getUserId()).isEmpty()) {
-            branchMemberRepository.save(BranchMember.builder().membershipId(Ids.uuid())
-                    .branchId(branch.getBranchId()).userId(user.getUserId()).build());
+            // Auth and business services persist their user rows separately.
+            // During the first authenticated shop-profile request the business
+            // user may not have been synced yet; do not let that transient
+            // state roll back the entire shop/profile transaction.
+            if (appUserRepository.existsById(user.getUserId())) {
+                branchMemberRepository.save(BranchMember.builder().membershipId(Ids.uuid())
+                        .branchId(branch.getBranchId()).userId(user.getUserId()).build());
+            }
         }
     }
 
@@ -302,6 +313,7 @@ public class ShopService {
         json.put("name", shop.getName());
         json.put("location", shop.getLocation() == null ? "" : shop.getLocation());
         json.put("phoneNumber", shop.getPhoneNumber() == null ? "" : shop.getPhoneNumber());
+        json.put("businessType", shop.getBusinessType() == null ? "" : shop.getBusinessType());
         json.put("tin", shop.getTin() == null ? "" : shop.getTin());
         json.put("bin", shop.getBin() == null ? "" : shop.getBin());
         json.put("imagePath", shop.getImagePath() == null ? "" : shop.getImagePath());
