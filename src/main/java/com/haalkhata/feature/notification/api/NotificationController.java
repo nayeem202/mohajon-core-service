@@ -26,10 +26,23 @@ public class NotificationController {
         return notificationService.history(user);
     }
 
+    @GetMapping("/home")
+    public java.util.List<Map<String, Object>> homeAnnouncements(
+            @AuthenticationPrincipal CurrentUser user) {
+        return notificationService.homeAnnouncements(user);
+    }
+
     @DeleteMapping("/history/{id}")
     public Map<String, Object> deleteForMe(@AuthenticationPrincipal CurrentUser user,
                                            @PathVariable String id) {
         notificationService.deleteForUser(user, id);
+        return Map.of("deleted", true);
+    }
+
+    @DeleteMapping("/history/platform/{id}")
+    public Map<String, Object> deletePlatformForMe(@AuthenticationPrincipal CurrentUser user,
+                                                   @PathVariable String id) {
+        notificationService.deletePlatformForUser(user, id);
         return Map.of("deleted", true);
     }
 
@@ -44,7 +57,8 @@ public class NotificationController {
     public Map<String, Object> registerDevice(@AuthenticationPrincipal CurrentUser user,
                                               @RequestBody Map<String, Object> request) {
         var device = notificationService.registerDevice(user, (String) request.get("token"),
-                (String) request.get("platform"), request.get("enabledTypes"));
+                (String) request.get("platform"), request.get("enabledTypes"),
+                (String) request.get("languageCode"));
         return Map.of("tokenId", device.getTokenId(), "registered", true);
     }
 
@@ -52,7 +66,7 @@ public class NotificationController {
     public Map<String, Object> updatePreferences(@AuthenticationPrincipal CurrentUser user,
                                                  @RequestBody Map<String, Object> request) {
         notificationService.updatePreferences(user, (String) request.get("token"),
-                request.get("enabledTypes"));
+                request.get("enabledTypes"), (String) request.get("languageCode"));
         return Map.of("updated", true);
     }
 

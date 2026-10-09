@@ -48,6 +48,9 @@ public class Shop {
     @Column(name = "image_path", length = 500)
     private String imagePath;
 
+    @Column(name = "report_logo_path", length = 500)
+    private String reportLogoPath;
+
     @Column(name = "owner_count", nullable = false)
     private int ownerCount;
 

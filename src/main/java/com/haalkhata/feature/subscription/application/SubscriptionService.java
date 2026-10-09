@@ -29,6 +29,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SubscriptionService {
 
+    /** Entitlements are deliberately separate from a billing period. A
+     * monthly and a yearly Pro purchase unlock exactly the same features. */
+    public enum Tier {
+        FREE, PRO, BUSINESS;
+
+        boolean includes(Tier required) {
+            return ordinal() >= required.ordinal();
+        }
+    }
+
     public static final String SUB_PENDING = "PENDING";
     public static final String SUB_ACTIVE = "ACTIVE";
     public static final String SUB_EXPIRED = "EXPIRED";
@@ -59,6 +69,53 @@ public class SubscriptionService {
     public List<Map<String, Object>> plans() {
         return planRepository.findByIsActiveTrueOrderBySortOrderAsc().stream()
                 .map(this::planToJson).toList();
+    }
+
+    /** Returns the currently effective feature tier. Trial users receive the
+     * complete Business experience so they can evaluate every paid feature. */
+    @Transactional
+    public Tier currentTier(String shopId) {
+        LocalDateTime now = LocalDateTime.now();
+        return subscriptionRepository.findByShopIdOrderByCreatedAtDesc(shopId).stream()
+                .filter(sub -> SUB_ACTIVE.equals(sub.getStatus()))
+                .filter(sub -> sub.getEndDate() == null || sub.getEndDate().isAfter(now))
+                .map(sub -> tierForPlan(sub.getPlanCode()))
+                .max(java.util.Comparator.comparingInt(Enum::ordinal))
+                .orElse(Tier.FREE);
+    }
+
+    public boolean hasTier(String shopId, Tier required) {
+        return currentTier(shopId).includes(required);
+    }
+
+    public void requireTier(String shopId, Tier required) {
+        if (!hasTier(shopId, required)) {
+            throw new BusinessException("SUBSCRIPTION_REQUIRED",
+                    required == Tier.BUSINESS
+                            ? "A Business plan is required for this feature"
+                            : "A Pro plan is required for this feature",
+                    HttpStatus.FORBIDDEN);
+        }
+    }
+
+    /** Monthly AI credits are attached to the active plan, not hardcoded in
+     * the mobile app. This lets pricing be tuned from the database. */
+    @Transactional(readOnly = true)
+    public int aiCreditsPerMonth(String shopId) {
+        LocalDateTime now = LocalDateTime.now();
+        return subscriptionRepository.findByShopIdOrderByCreatedAtDesc(shopId).stream()
+                .filter(sub -> SUB_ACTIVE.equals(sub.getStatus()))
+                .filter(sub -> sub.getEndDate() == null || sub.getEndDate().isAfter(now))
+                .map(sub -> planRepository.findById(sub.getPlanCode()).orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(SubscriptionPlan::getAiCreditsPerMonth)
+                .max().orElse(0);
+    }
+
+    @Transactional(readOnly = true)
+    public int aiWelcomeCredits() {
+        return planRepository.findById("FREE")
+                .map(SubscriptionPlan::getAiWelcomeCredits).orElse(5);
     }
 
     @Transactional
@@ -196,6 +253,15 @@ public class SubscriptionService {
         PaymentTransaction transaction = transactionRepository
                 .findByGatewayPaymentId(gatewayPaymentId)
                 .orElseThrow(() -> BusinessException.notFound("Unknown paymentID: " + gatewayPaymentId));
+        return confirmTransaction(transaction);
+    }
+
+    /** Platform-admin reconciliation still verifies directly with bKash; it
+     * never lets an operator mark a payment as paid by hand. */
+    @Transactional
+    public Map<String, Object> reconcileAsPlatformAdmin(String paymentId) {
+        PaymentTransaction transaction = transactionRepository.findById(paymentId)
+                .orElseThrow(() -> BusinessException.notFound("Payment not found."));
         return confirmTransaction(transaction);
     }
 
@@ -380,6 +446,10 @@ public class SubscriptionService {
 
         Map<String, Object> json = new HashMap<>();
         json.put("hasActive", active.isPresent());
+        Tier tier = currentTier(user.getShopId());
+        json.put("tier", tier.name());
+        json.put("hasPremium", tier.includes(Tier.PRO));
+        json.put("isFree", tier == Tier.FREE);
         if (active.isPresent()) {
             Subscription sub = active.get();
             boolean isTrial = PLAN_TRIAL.equals(sub.getPlanCode());
@@ -390,6 +460,10 @@ public class SubscriptionService {
             json.put("subscription", subJson);
             json.put("daysRemaining", daysRemaining);
             json.put("isTrial", isTrial);
+        } else {
+            json.put("subscription", freePlanStatus());
+            json.put("daysRemaining", null);
+            json.put("isTrial", false);
         }
         latest.ifPresent(sub -> json.put("latest", subscriptionToJson(sub)));
         return json;
@@ -504,8 +578,41 @@ public class SubscriptionService {
         json.put("currency", "BDT");
         json.put("durationDays", plan.getDurationDays());
         json.put("trialDays", plan.getTrialDays());
+        json.put("tier", normalizedTier(plan.getTier(), plan.getPlanCode()).name());
+        json.put("description", plan.getDescription());
+        json.put("aiCreditsPerMonth", plan.getAiCreditsPerMonth());
         json.put("isActive", plan.isActive());
         return json;
+    }
+
+    private Map<String, Object> freePlanStatus() {
+        SubscriptionPlan free = planRepository.findById("FREE").orElse(null);
+        Map<String, Object> json = new HashMap<>();
+        json.put("planCode", "FREE");
+        json.put("status", "ACTIVE");
+        json.put("plan", free == null
+                ? Map.of("planCode", "FREE", "name", "Free", "price", "0.00", "tier", "FREE")
+                : planToJson(free));
+        return json;
+    }
+
+    private Tier tierForPlan(String planCode) {
+        return planRepository.findById(planCode)
+                .map(plan -> normalizedTier(plan.getTier(), plan.getPlanCode()))
+                // Legacy paid subscriptions predate the tier column. They
+                // retain Pro access rather than being unexpectedly downgraded.
+                .orElse(PLAN_TRIAL.equals(planCode) ? Tier.BUSINESS : Tier.PRO);
+    }
+
+    private Tier normalizedTier(String rawTier, String planCode) {
+        if (PLAN_TRIAL.equals(planCode)) {
+            return Tier.BUSINESS;
+        }
+        try {
+            return Tier.valueOf(rawTier == null ? "PRO" : rawTier.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return Tier.PRO;
+        }
     }
 
     private Map<String, Object> subscriptionToJson(Subscription sub) {

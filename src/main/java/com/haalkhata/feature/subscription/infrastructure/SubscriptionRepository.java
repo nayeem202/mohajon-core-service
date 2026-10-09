@@ -15,4 +15,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Stri
     List<Subscription> findByShopIdOrderByCreatedAtDesc(String shopId);
 
     Optional<Subscription> findByInternalTransactionId(String internalTransactionId);
+
+    long countByStatus(String status);
 }

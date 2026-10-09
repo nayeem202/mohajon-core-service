@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class FileStorageService {
 
+    private static final long MAX_UPLOAD_BYTES = 8L * 1024 * 1024;
+
     private final AppProperties props;
 
     public record UploadResult(String url, String fileName) {
@@ -26,6 +28,9 @@ public class FileStorageService {
     public UploadResult store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw BusinessException.badRequest("No file provided");
+        }
+        if (file.getSize() > MAX_UPLOAD_BYTES) {
+            throw BusinessException.badRequest("File size must not exceed 8 MB");
         }
         String original = file.getOriginalFilename() == null ? "file" : file.getOriginalFilename();
         String ext = "";

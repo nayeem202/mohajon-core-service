@@ -361,12 +361,9 @@ public class SaleService {
     }
 
     private void requireActiveSubscription(CurrentUser user) {
-        if (props.isEnforceSubscription()
-                && !subscriptionService.hasActiveSubscription(user.getShopId())) {
-            throw new BusinessException("SUBSCRIPTION_REQUIRED",
-                    "An active subscription is required to record sales",
-                    org.springframework.http.HttpStatus.FORBIDDEN);
-        }
+        // Sales are part of the permanent Free tier. Premium restrictions are
+        // applied centrally to the features that carry paid value (exports,
+        // purchasing, business tools, staff and branches).
     }
 
     public Map<String, Object> toJson(Sale s) {

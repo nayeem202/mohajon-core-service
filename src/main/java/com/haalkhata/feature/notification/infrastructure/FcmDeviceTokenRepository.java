@@ -13,4 +13,9 @@ public interface FcmDeviceTokenRepository extends JpaRepository<FcmDeviceToken, 
 
     List<FcmDeviceToken> findByShopIdAndActiveTrueAndNotificationTypesContaining(
             String shopId, String notificationType);
+
+    List<FcmDeviceToken> findByUserIdAndActiveTrueAndNotificationTypesContaining(
+            String userId, String notificationType);
+
+    List<FcmDeviceToken> findByActiveTrueAndNotificationTypesContaining(String notificationType);
 }

@@ -1,7 +1,6 @@
 package com.haalkhata.feature.report.api;
 
 import com.haalkhata.core.config.AppProperties;
-import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.feature.report.application.ReportExportService;
 import com.haalkhata.feature.report.application.ReportService;
@@ -72,10 +71,8 @@ public class ReportController {
                                          @RequestParam(required = false)
                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                          @RequestParam(required = false) String customerId) {
-        if (props.isEnforceSubscription()
-                && !subscriptionService.hasActiveSubscription(user.getShopId())) {
-            throw new BusinessException("SUBSCRIPTION_REQUIRED",
-                    "An active subscription is required to export reports", HttpStatus.FORBIDDEN);
+        if (props.isEnforceSubscription()) {
+            subscriptionService.requireTier(user.getShopId(), SubscriptionService.Tier.PRO);
         }
         if ("customer-ledger".equals(type)
                 && (customerId == null || customerId.isBlank())) {

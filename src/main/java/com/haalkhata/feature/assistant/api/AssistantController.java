@@ -5,8 +5,11 @@ import com.haalkhata.feature.assistant.application.GeminiAskService;
 import com.haalkhata.feature.assistant.application.GeminiBillService;
 import com.haalkhata.feature.assistant.application.GeminiCommandService;
 import com.haalkhata.feature.assistant.application.TtsService;
+import com.haalkhata.feature.subscription.application.AiCreditService;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,16 +25,18 @@ public class AssistantController {
     private final GeminiBillService geminiBillService;
     private final GeminiAskService geminiAskService;
     private final TtsService ttsService;
+    private final AiCreditService aiCredits;
 
     @PostMapping("/command")
-    public Map<String, Object> command(@RequestBody Map<String, String> request) {
-        return geminiCommandService.interpret(request.get("text"));
+    public Map<String, Object> command(@AuthenticationPrincipal CurrentUser user,
+                                       @RequestBody Map<String, String> request) {
+        return charged(user, "VOICE_COMMAND", 1, () -> geminiCommandService.interpret(request.get("text")));
     }
 
     @PostMapping("/bill")
     public Map<String, Object> bill(@AuthenticationPrincipal CurrentUser user,
                                    @RequestBody Map<String, String> request) {
-        return geminiBillService.interpretBill(user, request.get("text"));
+        return charged(user, "VOICE_BILL", 1, () -> geminiBillService.interpretBill(user, request.get("text")));
     }
 
     @PostMapping("/bill-audio")
@@ -47,17 +52,20 @@ public class AssistantController {
         } catch (IllegalArgumentException ex) {
             throw com.haalkhata.core.exception.BusinessException.badRequest("Invalid audio data.");
         }
-        return geminiBillService.interpretBillAudio(user, request.get("mimeType"), audio);
+        return charged(user, "VOICE_BILL_AUDIO", 4,
+                () -> geminiBillService.interpretBillAudio(user, request.get("mimeType"), audio));
     }
 
     @PostMapping("/ask")
     public Map<String, Object> ask(@AuthenticationPrincipal CurrentUser user,
                                   @RequestBody Map<String, String> request) {
-        return geminiAskService.answer(user, request.get("text"), request.get("stats"));
+        return charged(user, "ASK", 1,
+                () -> geminiAskService.answer(user, request.get("text"), request.get("stats"), request.get("language")));
     }
 
     @PostMapping("/ask-audio")
-    public Map<String, Object> askAudio(@RequestBody Map<String, String> request) {
+    public Map<String, Object> askAudio(@AuthenticationPrincipal CurrentUser user,
+                                        @RequestBody Map<String, String> request) {
         String audioB64 = request.get("audio");
         if (audioB64 == null || audioB64.isBlank()) {
             throw com.haalkhata.core.exception.BusinessException.badRequest("Voice audio is empty.");
@@ -68,7 +76,13 @@ public class AssistantController {
         } catch (IllegalArgumentException ex) {
             throw com.haalkhata.core.exception.BusinessException.badRequest("Invalid audio data.");
         }
-        return geminiAskService.answerAudio(request.get("mimeType"), audio, request.get("stats"));
+        return charged(user, "ASK_AUDIO", 2,
+                () -> geminiAskService.answerAudio(user, request.get("mimeType"), audio, request.get("stats"), request.get("language")));
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/credits")
+    public Map<String, Object> credits(@AuthenticationPrincipal CurrentUser user) {
+        return aiCredits.status(user.getShopId());
     }
 
     @PostMapping("/tts")
@@ -82,5 +96,18 @@ public class AssistantController {
                 .map(bytes -> Base64.getEncoder().encodeToString(bytes))
                 .toList();
         return Map.of("segments", segments);
+    }
+
+    private Map<String, Object> charged(CurrentUser user, String feature, int cost,
+                                        Supplier<Map<String, Object>> action) {
+        AiCreditService.Reservation reservation = aiCredits.reserve(user.getShopId(), feature, cost);
+        try {
+            Map<String, Object> response = new HashMap<>(action.get());
+            response.put("credits", aiCredits.status(user.getShopId()));
+            return response;
+        } catch (RuntimeException ex) {
+            aiCredits.refund(reservation);
+            throw ex;
+        }
     }
 }

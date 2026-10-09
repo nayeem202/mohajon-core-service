@@ -37,6 +37,20 @@ public class SubscriptionPlan {
     @Column(name = "trial_days")
     private Integer trialDays;
 
+    /** FREE, PRO, BUSINESS, or TRIAL. Kept in the database so plans can be
+     * changed without a mobile-app release. */
+    @Column(name = "tier", nullable = false, length = 20)
+    private String tier;
+
+    @Column(name = "description", length = 300)
+    private String description;
+
+    @Column(name = "ai_credits_per_month", nullable = false)
+    private int aiCreditsPerMonth;
+
+    @Column(name = "ai_welcome_credits", nullable = false)
+    private int aiWelcomeCredits;
+
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 

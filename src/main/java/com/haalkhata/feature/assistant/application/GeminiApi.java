@@ -40,6 +40,9 @@ public class GeminiApi {
     @Value("${app.gemini-model:gemini-3.6-flash}")
     private String geminiModel;
 
+    @Value("${app.ai-provider-mode:chain}")
+    private String aiProviderMode;
+
     @Value("${app.orca-api-key:}")
     private String orcaKey;
 
@@ -60,6 +63,9 @@ public class GeminiApi {
     }
 
     public JsonNode generate(String prompt) {
+        if (geminiOnly()) {
+            return generateWithGemini(prompt);
+        }
         // Provider chain: Orca (free, good Bangla) → Gemini (best Bangla when still in quota) → Groq.
         BusinessException firstError = null;
         if (orcaConfigured()) {
@@ -97,6 +103,12 @@ public class GeminiApi {
     }
 
     public JsonNode generateWithAudio(String prompt, String mimeType, byte[] audio) {
+        if (geminiOnly()) {
+            if (!geminiConfigured()) {
+                throw new BusinessException("AI_NOT_CONFIGURED", "Gemini AI is not configured.");
+            }
+            return geminiSendWithAudio(prompt, mimeType, audio);
+        }
         // Audio: the device's Whisper transcription is done below; providers only
         // see text, so route through the same text chain once we have a transcript.
         String resolved = null;
@@ -121,6 +133,20 @@ public class GeminiApi {
 
     private boolean geminiConfigured() {
         return geminiKey != null && !geminiKey.isBlank();
+    }
+
+    private boolean geminiOnly() {
+        return "gemini-only".equalsIgnoreCase(aiProviderMode == null ? "" : aiProviderMode.trim());
+    }
+
+    private JsonNode generateWithGemini(String prompt) {
+        if (!geminiConfigured()) {
+            throw new BusinessException("AI_NOT_CONFIGURED", "Gemini AI is not configured.");
+        }
+        Map<String, Object> requestBody = new java.util.HashMap<>();
+        requestBody.put("contents", List.of(Map.of(
+                "parts", List.of(Map.<String, Object>of("text", prompt)))));
+        return geminiSend(requestBody);
     }
 
     private boolean groqConfigured() {

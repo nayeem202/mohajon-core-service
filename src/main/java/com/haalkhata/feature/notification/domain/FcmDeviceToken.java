@@ -42,6 +42,9 @@ public class FcmDeviceToken {
     @Column(name = "notification_types", nullable = false, columnDefinition = "text")
     private String notificationTypes;
 
+    @Column(name = "language_code", nullable = false, length = 8)
+    private String languageCode;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

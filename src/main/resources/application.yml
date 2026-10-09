@@ -56,15 +56,19 @@ app:
   firebase-service-account-file: ${FIREBASE_SERVICE_ACCOUNT_FILE:}
   gemini-api-key: ${GEMINI_API_KEY:}
   gemini-model: ${GEMINI_MODEL:gemini-3.6-flash}
+  ai-provider-mode: ${AI_PROVIDER_MODE:chain}
   orca-api-key: ${ORCA_API_KEY:}
   orca-model: ${ORCA_MODEL:deepseek/deepseek-v4-flash-free}
   groq-api-key: ${GROQ_API_KEY:}
   groq-model: ${GROQ_MODEL:qwen/qwen3.8-27b}
   groq-stt-model: ${GROQ_STT_MODEL:whisper-large-v3-turbo}
   log-request-body: ${LOG_REQUEST_BODY:true}
-  # When true, sales/reports require an active subscription for the shop.
-  enforce-subscription: ${SUBSCRIPTION_ENFORCEMENT:false}
+  # Keep premium API entitlements on outside local/demo environments.
+  enforce-subscription: ${SUBSCRIPTION_ENFORCEMENT:true}
   public-base-url: ${PUBLIC_BASE_URL:}
+  # Global support agents only. Never use a shop's ADMIN role for this.
+  support-admin-user-ids: ${SUPPORT_ADMIN_USER_IDS:}
+  platform-admin-user-ids: ${PLATFORM_ADMIN_USER_IDS:}
   bkash:
     base-url: ${BKASH_BASE_URL:https://tokenized.sandbox.bka.sh/v1.2.0-beta}
     app-key: ${BKASH_APP_KEY:4f6o0cjiki2rfm34kfdadl1eqq}

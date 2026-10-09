@@ -30,7 +30,17 @@ public class BranchService {
             b.setDefault(true);
         }
         b.setUpdatedAt(LocalDateTime.now()); Branch saved = branches.save(b);
-        if (members.findByBranchIdAndUserId(saved.getBranchId(), user.getUserId()).isEmpty()) members.save(BranchMember.builder().membershipId(Ids.uuid()).branchId(saved.getBranchId()).userId(user.getUserId()).build());
+        // Authentication is provided by the shared auth service. Its owner may
+        // legitimately not have a mirrored row in this service's legacy
+        // `users` table, while branch_members has a foreign key to that table.
+        // Owners already have access through their JWT role, so only create a
+        // membership when the local user exists; otherwise this FK insert turns
+        // a valid branch creation into an opaque 500 response.
+        if (users.existsById(user.getUserId())
+                && members.findByBranchIdAndUserId(saved.getBranchId(), user.getUserId()).isEmpty()) {
+            members.save(BranchMember.builder().membershipId(Ids.uuid())
+                    .branchId(saved.getBranchId()).userId(user.getUserId()).build());
+        }
         return json(saved);
     }
     @Transactional public void assign(CurrentUser owner, String branchId, String userId) {

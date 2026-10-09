@@ -84,7 +84,8 @@ public class ShopService {
     private final BranchMemberRepository branchMemberRepository;
 
     public record UpdateShopRequest(String name, String location, String phoneNumber, String imagePath,
-                                    List<OwnerDto> owners, String tin, String bin, String businessType) {
+                                    String reportLogoPath, List<OwnerDto> owners, String tin, String bin,
+                                    String businessType) {
     }
 
     public record OwnerDto(String ownerId, String name, Double investmentAmount) {
@@ -212,6 +213,23 @@ public class ShopService {
         if (request.imagePath() != null) {
             shop.setImagePath(request.imagePath().isBlank() ? null : request.imagePath().trim());
         }
+        if (request.reportLogoPath() != null) {
+            String logoPath = request.reportLogoPath().trim();
+            if (!logoPath.isEmpty() && logoPath.length() > 500) {
+                throw com.haalkhata.core.exception.BusinessException.badRequest("Report logo URL is too long");
+            }
+            if (!logoPath.isEmpty() && !(logoPath.startsWith("/api/v1/files/")
+                    || logoPath.startsWith("http://") || logoPath.startsWith("https://"))) {
+                throw com.haalkhata.core.exception.BusinessException.badRequest("Report logo must be an uploaded image");
+            }
+            String normalizedLogoPath = logoPath.toLowerCase(java.util.Locale.ROOT);
+            if (!logoPath.isEmpty() && !(normalizedLogoPath.endsWith(".jpg")
+                    || normalizedLogoPath.endsWith(".jpeg") || normalizedLogoPath.endsWith(".png"))) {
+                throw com.haalkhata.core.exception.BusinessException.badRequest(
+                        "Report logo must be a JPG or PNG image");
+            }
+            shop.setReportLogoPath(logoPath.isEmpty() ? null : logoPath);
+        }
         if (request.tin() != null) {
             shop.setTin(request.tin().isBlank() ? null : request.tin().trim());
         }
@@ -317,6 +335,7 @@ public class ShopService {
         json.put("tin", shop.getTin() == null ? "" : shop.getTin());
         json.put("bin", shop.getBin() == null ? "" : shop.getBin());
         json.put("imagePath", shop.getImagePath() == null ? "" : shop.getImagePath());
+        json.put("reportLogoPath", shop.getReportLogoPath() == null ? "" : shop.getReportLogoPath());
         json.put("owners", owners);
         json.put("ownerCount", shop.getOwnerCount());
         json.put("totalInvestment", shop.getTotalInvestment());

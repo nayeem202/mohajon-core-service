@@ -19,8 +19,12 @@ public class AppProperties {
     private String mailProvider = "console";
     private String googleClientId = "";
     private boolean logRequestBody = true;
-    private boolean enforceSubscription = false;
+    private boolean enforceSubscription = true;
     private String publicBaseUrl = "";
+    /** Comma-separated account IDs allowed to handle all customer support tickets. */
+    private String supportAdminUserIds = "";
+    /** Comma-separated global accounts allowed to use the platform admin portal. */
+    private String platformAdminUserIds = "";
     private Bkash bkash = new Bkash();
 
     @Data

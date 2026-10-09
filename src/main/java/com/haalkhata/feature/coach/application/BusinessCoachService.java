@@ -68,11 +68,15 @@ public class BusinessCoachService {
                         () -> insightRepository.save(item)));
         if (!alreadyGenerated) {
             try {
-                notificationService.send(new CurrentUser(ownerUserId, "", "", shopId, "OWNER", List.of("OWNER"), branchId),
+                notificationService.sendLocalized(new CurrentUser(ownerUserId, "", "", shopId, "OWNER", List.of("OWNER"), branchId),
                         "Mohajon Business Coach", generated.isEmpty()
                                 ? "Your daily business brief is ready. No urgent warning today."
                                 : "Your daily business brief is ready.",
-                        Map.of("type", "platform", "screen", "business_coach"));
+                        "মহাজন বিজনেস কোচ", generated.isEmpty()
+                                ? "আজকের ব্যবসার পরামর্শ প্রস্তুত। আজ কোনো জরুরি সতর্কতা নেই।"
+                                : "আজকের ব্যবসার পরামর্শ প্রস্তুত।",
+                        Map.of("type", "platform", "screen", "business_coach",
+                                "template", "business_coach_daily"));
             } catch (BusinessException ex) {
                 log.warn("Coach history saved but push was not sent for shop {}: {}", shopId, ex.getMessage());
             }
