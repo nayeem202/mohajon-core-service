@@ -39,17 +39,31 @@ public class SubscriptionEntitlementInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private SubscriptionService.Tier requiredTier(String path, String method) {
+    SubscriptionService.Tier requiredTier(String path, String method) {
         // Export is a GET request, but remains a Pro feature.
         if (path.startsWith("/api/v1/reports/") && path.endsWith("/export")) {
             return SubscriptionService.Tier.PRO;
         }
+
+        // Business-plan features must be protected for reads as well as writes.
+        // Otherwise free-tier callers can bypass the mobile paywall by calling
+        // these endpoints directly (or by opening a stale cached screen).
+        if (path.equals("/api/v1/branches") || path.startsWith("/api/v1/branches/")) {
+            return SubscriptionService.Tier.BUSINESS;
+        }
+        if (path.equals("/api/v1/users")
+                || (path.startsWith("/api/v1/users/")
+                && !path.startsWith("/api/v1/users/me"))
+                || path.equals("/api/v1/roles")
+                || path.startsWith("/api/v1/roles/")) {
+            return SubscriptionService.Tier.BUSINESS;
+        }
+        if (path.equals("/api/v1/business-guardian/timeline")) {
+            return SubscriptionService.Tier.BUSINESS;
+        }
+
         if (HttpMethod.GET.matches(method)) {
             return null;
-        }
-        if (path.startsWith("/api/v1/branches/") || path.equals("/api/v1/branches")
-                || (path.startsWith("/api/v1/users") && !path.startsWith("/api/v1/users/me"))) {
-            return SubscriptionService.Tier.BUSINESS;
         }
         if (path.startsWith("/api/v1/purchases") || path.startsWith("/api/v1/vendors")
                 || path.startsWith("/api/v1/investments") || path.startsWith("/api/v1/investors")) {
