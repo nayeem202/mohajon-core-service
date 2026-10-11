@@ -50,6 +50,12 @@ public class PurchaseOrder {
     @Column(name = "received_qty_json", columnDefinition = "text")
     private String receivedQtyJson;
 
+    @Column(name = "delivered_qty_json", columnDefinition = "text")
+    private String deliveredQtyJson;
+
+    @Column(name = "receipts_json", columnDefinition = "text")
+    private String receiptsJson;
+
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;
 }
