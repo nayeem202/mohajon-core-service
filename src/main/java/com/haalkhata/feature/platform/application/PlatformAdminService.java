@@ -12,6 +12,7 @@ import com.haalkhata.feature.subscription.infrastructure.PaymentTransactionRepos
 import com.haalkhata.feature.subscription.infrastructure.SubscriptionRepository;
 import com.haalkhata.feature.support.infrastructure.SupportTicketRepository;
 import java.util.Arrays;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,11 +68,14 @@ public class PlatformAdminService {
     public Map<String, Object> sendPush(CurrentUser user, PushRequest request) {
         requirePlatformAdmin(user);
         if (request == null) throw BusinessException.badRequest("Notification details are required.");
+        if (request.expiresAt() == null || !request.expiresAt().isAfter(Instant.now())) {
+            throw BusinessException.badRequest("Choose a notification expiry time in the future.");
+        }
         var audience = request.audience() == null ? "" : request.audience().trim().toUpperCase();
         var data = Map.of("screen", "notifications", "source", "platform_admin");
         if ("ALL".equals(audience)) {
             return notifications.sendPlatformBroadcast(user.getUserId(), request.title(), request.body(),
-                    request.titleBn(), request.bodyBn(), request.imageUrl(), data);
+                    request.titleBn(), request.bodyBn(), request.imageUrl(), request.expiresAt(), data);
         }
         if (!"USER".equals(audience) || request.recipientEmail() == null || request.recipientEmail().isBlank()) {
             throw BusinessException.badRequest("Choose all users or enter a recipient email.");
@@ -79,7 +83,8 @@ public class PlatformAdminService {
         var recipient = users.findByEmailIgnoreCase(request.recipientEmail().trim())
                 .orElseThrow(() -> BusinessException.notFound("User account not found."));
         var result = new java.util.HashMap<>(notifications.sendPlatformToUser(user.getUserId(), recipient.getId(),
-                request.title(), request.body(), request.titleBn(), request.bodyBn(), request.imageUrl(), data));
+                request.title(), request.body(), request.titleBn(), request.bodyBn(), request.imageUrl(),
+                request.expiresAt(), data));
         result.put("recipient", Map.of("userId", recipient.getId(), "name", recipient.getName(),
                 "email", recipient.getEmail()));
         return result;
@@ -115,5 +120,5 @@ public class PlatformAdminService {
     }
 
     public record PushRequest(String audience, String recipientEmail, String title, String body,
-                              String titleBn, String bodyBn, String imageUrl) {}
+                              String titleBn, String bodyBn, String imageUrl, Instant expiresAt) {}
 }

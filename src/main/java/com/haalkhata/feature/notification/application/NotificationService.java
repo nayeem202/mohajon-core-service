@@ -23,6 +23,7 @@ import com.haalkhata.feature.auth.infrastructure.AppUserRepository;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -205,19 +206,21 @@ public class NotificationService {
     @Transactional
     public Map<String, Object> sendPlatformBroadcast(String senderUserId, String title, String body,
                                                        String titleBn, String bodyBn, String imageUrl,
+                                                       Instant expiresAt,
                                                        Map<String, String> data) {
         return sendPlatformToDevices(senderUserId, "ALL", null,
                 tokenRepository.findByActiveTrueAndNotificationTypesContaining("platform"),
-                title, body, titleBn, bodyBn, imageUrl, data);
+                title, body, titleBn, bodyBn, imageUrl, expiresAt, data);
     }
 
     @Transactional
     public Map<String, Object> sendPlatformToUser(String senderUserId, String userId, String title, String body,
                                                     String titleBn, String bodyBn, String imageUrl,
+                                                    Instant expiresAt,
                                                     Map<String, String> data) {
         return sendPlatformToDevices(senderUserId, "USER", userId,
                 tokenRepository.findByUserIdAndActiveTrueAndNotificationTypesContaining(userId, "platform"),
-                title, body, titleBn, bodyBn, imageUrl, data);
+                title, body, titleBn, bodyBn, imageUrl, expiresAt, data);
     }
 
     private Map<String, Object> sendPlatformToDevices(String senderUserId, String audience,
@@ -225,8 +228,12 @@ public class NotificationService {
                                                         List<FcmDeviceToken> devices,
                                                         String title, String body,
                                                         String titleBn, String bodyBn, String imageUrl,
+                                                        Instant expiresAt,
                                                         Map<String, String> data) {
         validatePlatformMessage(title, body, titleBn, bodyBn, imageUrl);
+        if (expiresAt == null || !expiresAt.isAfter(Instant.now())) {
+            throw BusinessException.badRequest("Choose a notification expiry time in the future.");
+        }
         var inboxItem = platformNotificationRepository.save(PlatformNotification.builder()
                 .id(UUID.randomUUID().toString())
                 .senderUserId(senderUserId)
@@ -238,6 +245,7 @@ public class NotificationService {
                 .bodyBn(blankToNull(bodyBn))
                 .imageUrl(blankToNull(imageUrl))
                 .createdAt(LocalDateTime.now())
+                .expiresAt(expiresAt)
                 .build());
         var pushData = data == null ? new HashMap<String, String>() : new HashMap<>(data);
         pushData.put("type", "platform");
@@ -327,6 +335,7 @@ public class NotificationService {
         if (item.getTitleBn() != null) result.put("titleBn", item.getTitleBn());
         if (item.getBodyBn() != null) result.put("descriptionBn", item.getBodyBn());
         if (item.getImageUrl() != null) result.put("imageUrl", item.getImageUrl());
+        result.put("expiresAt", item.getExpiresAt().toString());
         result.put("timestamp", item.getCreatedAt().toString());
         result.put("read", false);
         result.put("category", "platform");
@@ -336,7 +345,7 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> homeAnnouncements(CurrentUser user) {
-        return platformNotificationRepository.findForUser(user.getUserId(), PageRequest.of(0, 3))
+        return platformNotificationRepository.findActiveForUser(user.getUserId(), Instant.now(), PageRequest.of(0, 3))
                 .stream().map(item -> platformHistoryJson(user, item)).toList();
     }
 

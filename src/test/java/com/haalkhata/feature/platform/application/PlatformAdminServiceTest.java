@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import com.haalkhata.core.config.AppProperties;
 import com.haalkhata.core.exception.BusinessException;
 import com.haalkhata.core.security.CurrentUser;
+import com.haalkhata.feature.auth.infrastructure.AppUserRepository;
+import com.haalkhata.feature.notification.application.NotificationService;
 import com.haalkhata.feature.shop.infrastructure.ShopRepository;
 import com.haalkhata.feature.subscription.application.SubscriptionService;
 import com.haalkhata.feature.subscription.infrastructure.PaymentTransactionRepository;
@@ -27,6 +29,8 @@ class PlatformAdminServiceTest {
     @Mock private PaymentTransactionRepository payments;
     @Mock private SupportTicketRepository supportTickets;
     @Mock private SubscriptionService subscriptionService;
+    @Mock private AppUserRepository users;
+    @Mock private NotificationService notifications;
     @InjectMocks private PlatformAdminService service;
 
     @Test
@@ -44,6 +48,17 @@ class PlatformAdminServiceTest {
         assertThatThrownBy(() -> service.overview(user("shop-admin")))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Platform admin access required");
+    }
+
+    @Test
+    void sendPush_requiresAnExpiryTime() {
+        when(properties.getPlatformAdminUserIds()).thenReturn("platform-1");
+
+        assertThatThrownBy(() -> service.sendPush(user("platform-1"),
+                new PlatformAdminService.PushRequest("ALL", null, "Update", "Details",
+                        null, null, null, null)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("expiry time in the future");
     }
 
     private CurrentUser user(String userId) {

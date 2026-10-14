@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,4 +28,5 @@ public class PlatformNotification {
     @Column(name = "body_bn", columnDefinition = "text") private String bodyBn;
     @Column(name = "image_url", length = 500) private String imageUrl;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
+    @Column(name = "expires_at", nullable = false) private Instant expiresAt;
 }
