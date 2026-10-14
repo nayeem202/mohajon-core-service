@@ -63,5 +63,27 @@ public interface SaleRepository extends JpaRepository<Sale, String> {
     double sumPaidForBranch(@Param("shopId") String shopId, @Param("branchId") String branchId,
                             @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
+    /** Aggregates only the columns needed by the dashboard; never loads sale entities/items. */
+    @Query(value = "select date_trunc(cast(:bucket as text), s.created_at), "
+            + "coalesce(sum(s.total_amount), 0), count(*) "
+            + "from sales s where s.shop_id = :shopId and s.branch_id = :branchId "
+            + "and s.is_deleted = false and s.created_at >= :from and s.created_at < :to "
+            + "group by date_trunc(cast(:bucket as text), s.created_at) "
+            + "order by date_trunc(cast(:bucket as text), s.created_at)", nativeQuery = true)
+    List<Object[]> aggregateSalesTrend(@Param("shopId") String shopId,
+                                       @Param("branchId") String branchId,
+                                       @Param("from") LocalDateTime from,
+                                       @Param("to") LocalDateTime to,
+                                       @Param("bucket") String bucket);
+
+    @Query(value = "select coalesce(sum(s.total_amount), 0), count(*) "
+            + "from sales s where s.shop_id = :shopId and s.branch_id = :branchId "
+            + "and s.is_deleted = false and s.created_at >= :from and s.created_at < :to",
+            nativeQuery = true)
+    Object[] aggregateSalesTotals(@Param("shopId") String shopId,
+                                  @Param("branchId") String branchId,
+                                  @Param("from") LocalDateTime from,
+                                  @Param("to") LocalDateTime to);
+
     void deleteByShopId(String shopId);
 }

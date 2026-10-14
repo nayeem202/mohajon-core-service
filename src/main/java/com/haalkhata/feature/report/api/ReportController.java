@@ -5,6 +5,7 @@ import com.haalkhata.core.security.CurrentUser;
 import com.haalkhata.feature.report.application.ReportExportService;
 import com.haalkhata.feature.report.application.ReportService;
 import com.haalkhata.feature.report.application.ReportTable;
+import com.haalkhata.feature.report.application.SalesTrendService;
 import com.haalkhata.feature.subscription.application.SubscriptionService;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController {
 
     private final ReportService reportService;
+    private final SalesTrendService salesTrendService;
     private final ReportExportService reportExportService;
     private final SubscriptionService subscriptionService;
     private final AppProperties props;
@@ -40,6 +42,16 @@ public class ReportController {
                                      @RequestParam(required = false)
                                      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return reportService.salesSummary(user, from, to);
+    }
+
+    @GetMapping("/sales-trend")
+    public Map<String, Object> salesTrend(@AuthenticationPrincipal CurrentUser user,
+                                          @RequestParam
+                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                          @RequestParam
+                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                                          @RequestParam(defaultValue = "month") String groupBy) {
+        return salesTrendService.trend(user, from, to, groupBy);
     }
 
     @GetMapping("/inventory")
