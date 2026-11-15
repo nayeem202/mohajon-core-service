@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.haalkhata'
 version = '1.0.0'
-description = 'Haalkhata backend service - all app APIs migrated from Firebase'
+description = 'Mohajon core service - business APIs for POS, inventory, and due management'
 
 java {
     toolchain {

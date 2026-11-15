@@ -1,4 +1,5 @@
 firebase-adminsdk*.json
+src/main/resources/application-local.yml
 secrets/
 .gradle/
 build/
